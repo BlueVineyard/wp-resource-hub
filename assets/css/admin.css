@@ -1,0 +1,237 @@
+/**
+ * WP Resource Hub - Admin Styles
+ *
+ * @package WPResourceHub
+ * @since   1.0.0
+ */
+
+/* ==========================================================================
+   Resource Type Selector
+   ========================================================================== */
+
+.wprh-type-selector {
+    padding: 15px 0;
+}
+
+.wprh-type-selector .description {
+    margin-bottom: 15px;
+    font-style: italic;
+}
+
+.wprh-type-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.wprh-type-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 120px;
+    height: 100px;
+    padding: 15px;
+    border: 2px solid #dcdcde;
+    border-radius: 4px;
+    background: #fff;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.wprh-type-button:hover {
+    border-color: #2271b1;
+    background: #f6f7f7;
+}
+
+.wprh-type-button.selected {
+    border-color: #2271b1;
+    background: #f0f6fc;
+    box-shadow: 0 0 0 1px #2271b1;
+}
+
+.wprh-type-button input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.wprh-type-button .dashicons {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    margin-bottom: 8px;
+    color: #646970;
+}
+
+.wprh-type-button:hover .dashicons,
+.wprh-type-button.selected .dashicons {
+    color: #2271b1;
+}
+
+.wprh-type-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #1d2327;
+}
+
+/* ==========================================================================
+   Resource Details Meta Box
+   ========================================================================== */
+
+.wprh-details-wrapper {
+    padding: 10px 0;
+}
+
+.wprh-no-type-notice {
+    padding: 15px;
+    background: #f6f7f7;
+    border-left: 4px solid #c3c4c7;
+    font-style: italic;
+}
+
+.wprh-type-fields {
+    padding: 10px 0;
+}
+
+.wprh-type-fields h4 {
+    margin: 0 0 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #dcdcde;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.wprh-type-fields .form-table {
+    margin-top: 0;
+}
+
+.wprh-type-fields .form-table th {
+    width: 180px;
+    padding-left: 0;
+}
+
+.wprh-type-fields .required {
+    color: #d63638;
+}
+
+/* ==========================================================================
+   Media Upload Fields
+   ========================================================================== */
+
+.wprh-media-upload {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+}
+
+.wprh-media-preview {
+    margin-top: 10px;
+    width: 100%;
+}
+
+.wprh-media-preview img {
+    max-width: 150px;
+    height: auto;
+    border: 1px solid #dcdcde;
+    border-radius: 4px;
+}
+
+.wprh-file-info {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 5px;
+    padding: 8px 12px;
+    background: #f6f7f7;
+    border-radius: 4px;
+    font-size: 13px;
+    width: 100%;
+}
+
+.wprh-file-info .dashicons {
+    color: #646970;
+}
+
+/* ==========================================================================
+   Internal Content Fields
+   ========================================================================== */
+
+.wprh-internal-content-fields fieldset {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.wprh-internal-content-fields fieldset label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ==========================================================================
+   Settings Page
+   ========================================================================== */
+
+.wprh-settings .nav-tab-wrapper {
+    margin-bottom: 20px;
+}
+
+.wprh-settings .form-table th {
+    width: 250px;
+}
+
+.wprh-settings fieldset label {
+    display: block;
+    margin-bottom: 6px;
+}
+
+/* ==========================================================================
+   Dashboard Page
+   ========================================================================== */
+
+.wprh-dashboard {
+    max-width: 1200px;
+}
+
+.wprh-dashboard h1 {
+    margin-bottom: 20px;
+}
+
+/* ==========================================================================
+   Responsive Adjustments
+   ========================================================================== */
+
+@media screen and (max-width: 782px) {
+    .wprh-type-buttons {
+        justify-content: center;
+    }
+
+    .wprh-type-button {
+        width: 100px;
+        height: 90px;
+    }
+
+    .wprh-type-button .dashicons {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+    }
+
+    .wprh-type-fields .form-table th,
+    .wprh-settings .form-table th {
+        width: 100%;
+        padding-bottom: 0;
+    }
+
+    .wprh-dashboard-stats {
+        flex-direction: column;
+    }
+
+    .wprh-stat-box {
+        width: 100%;
+    }
+}

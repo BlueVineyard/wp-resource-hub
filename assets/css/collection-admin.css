@@ -1,0 +1,203 @@
+/**
+ * WP Resource Hub - Collection Admin Styles
+ *
+ * @package WPResourceHub
+ * @since   1.1.0
+ */
+
+/* Collection Resources Wrapper */
+.wprh-collection-resources-wrapper {
+    padding: 10px 0;
+}
+
+/* Search Box */
+.wprh-collection-search {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.wprh-collection-search input {
+    padding-right: 30px;
+}
+
+.wprh-search-results {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-top: none;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 100;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.wprh-search-result-item {
+    padding: 10px 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid #f0f0f1;
+}
+
+.wprh-search-result-item:hover {
+    background: #f0f6fc;
+}
+
+.wprh-search-result-item:last-child {
+    border-bottom: none;
+}
+
+.wprh-search-result-item .wprh-resource-type-icon {
+    color: #646970;
+}
+
+.wprh-search-result-item .wprh-resource-title {
+    flex: 1;
+    font-weight: 500;
+}
+
+.wprh-search-result-item .wprh-resource-type-label {
+    font-size: 11px;
+    color: #646970;
+    background: #f0f0f1;
+    padding: 2px 8px;
+    border-radius: 3px;
+}
+
+.wprh-search-no-results {
+    padding: 15px;
+    text-align: center;
+    color: #646970;
+}
+
+.wprh-search-loading {
+    padding: 15px;
+    text-align: center;
+    color: #646970;
+}
+
+/* Resources List */
+.wprh-collection-resources-list {
+    min-height: 100px;
+    background: #f6f7f7;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 10px;
+}
+
+.wprh-no-resources-message {
+    text-align: center;
+    color: #646970;
+    padding: 30px;
+    margin: 0;
+}
+
+/* Resource Item */
+.wprh-collection-resource-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 15px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    cursor: move;
+    transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.wprh-collection-resource-item:last-child {
+    margin-bottom: 0;
+}
+
+.wprh-collection-resource-item:hover {
+    border-color: #2271b1;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.wprh-collection-resource-item.ui-sortable-helper {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-color: #2271b1;
+}
+
+.wprh-collection-resource-item.ui-sortable-placeholder {
+    visibility: visible !important;
+    background: #e0e0e0;
+    border: 2px dashed #999;
+}
+
+/* Drag Handle */
+.wprh-resource-drag-handle {
+    cursor: move;
+    color: #c3c4c7;
+    font-size: 16px;
+}
+
+.wprh-collection-resource-item:hover .wprh-resource-drag-handle {
+    color: #646970;
+}
+
+/* Resource Type Icon */
+.wprh-resource-type-icon {
+    color: #646970;
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+/* Resource Title */
+.wprh-resource-title {
+    flex: 1;
+    font-weight: 500;
+    color: #1d2327;
+}
+
+/* Resource Type Label */
+.wprh-resource-type-label {
+    font-size: 11px;
+    color: #646970;
+    background: #f0f0f1;
+    padding: 2px 8px;
+    border-radius: 3px;
+}
+
+/* Remove Button */
+.wprh-remove-resource {
+    color: #a7aaad;
+    text-decoration: none;
+    padding: 5px;
+    border-radius: 3px;
+    transition: color 0.2s, background 0.2s;
+}
+
+.wprh-remove-resource:hover {
+    color: #d63638;
+    background: #fcf0f1;
+}
+
+.wprh-remove-resource .dashicons {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+}
+
+/* Collection Settings */
+.wprh-collection-settings p {
+    margin-bottom: 12px;
+}
+
+.wprh-collection-settings label {
+    display: block;
+    margin-bottom: 8px;
+}
+
+/* Type-specific badge colors */
+.wprh-collection-resource-item[data-type="video"] .wprh-resource-type-icon { color: #d63638; }
+.wprh-collection-resource-item[data-type="pdf"] .wprh-resource-type-icon { color: #2271b1; }
+.wprh-collection-resource-item[data-type="download"] .wprh-resource-type-icon { color: #00a32a; }
+.wprh-collection-resource-item[data-type="external-link"] .wprh-resource-type-icon { color: #996800; }
+.wprh-collection-resource-item[data-type="internal-content"] .wprh-resource-type-icon { color: #8c1aff; }

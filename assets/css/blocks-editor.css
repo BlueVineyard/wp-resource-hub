@@ -1,0 +1,380 @@
+/**
+ * WP Resource Hub - Block Editor Styles
+ *
+ * @package WPResourceHub
+ * @since   1.2.0
+ */
+
+/* ==========================================================================
+   Block Editor Wrapper
+   ========================================================================== */
+
+.wp-block-wp-resource-hub-resources-grid,
+.wp-block-wp-resource-hub-resource,
+.wp-block-wp-resource-hub-collection {
+    margin: 20px 0;
+}
+
+/* ==========================================================================
+   Resources Grid Block Preview
+   ========================================================================== */
+
+.wprh-block-preview {
+    padding: 20px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    min-height: 200px;
+}
+
+.wprh-block-preview .wprh-resources-container {
+    max-width: 100%;
+}
+
+/* Server Side Render loading state */
+.components-server-side-render {
+    min-height: 150px;
+}
+
+.components-server-side-render .components-placeholder {
+    min-height: 150px;
+}
+
+/* ==========================================================================
+   Block Placeholder
+   ========================================================================== */
+
+.wp-block-wp-resource-hub-resource .components-placeholder,
+.wp-block-wp-resource-hub-collection .components-placeholder {
+    background: #f0f0f1;
+    border: 1px dashed #c3c4c7;
+    border-radius: 8px;
+}
+
+.wp-block-wp-resource-hub-resource .components-placeholder__label,
+.wp-block-wp-resource-hub-collection .components-placeholder__label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wp-block-wp-resource-hub-resource .components-placeholder__instructions,
+.wp-block-wp-resource-hub-collection .components-placeholder__instructions {
+    color: #757575;
+}
+
+/* ==========================================================================
+   Inspector Panel Overrides
+   ========================================================================== */
+
+.wprh-inspector-panel .components-panel__body-title {
+    font-weight: 500;
+}
+
+.wprh-inspector-panel .components-select-control__input {
+    max-width: 100%;
+}
+
+.wprh-inspector-panel .components-range-control__number {
+    width: 60px;
+}
+
+/* Toggle group styling */
+.wprh-inspector-panel .components-toggle-control {
+    margin-bottom: 10px;
+}
+
+.wprh-inspector-panel .components-toggle-control:last-child {
+    margin-bottom: 0;
+}
+
+/* ==========================================================================
+   Block Alignment Support
+   ========================================================================== */
+
+.wp-block-wp-resource-hub-resources-grid.alignwide,
+.wp-block-wp-resource-hub-collection.alignwide {
+    max-width: var(--wp--style--global--wide-size, 1200px);
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.wp-block-wp-resource-hub-resources-grid.alignfull,
+.wp-block-wp-resource-hub-collection.alignfull {
+    max-width: 100%;
+    margin-left: calc(-50vw + 50%);
+    margin-right: calc(-50vw + 50%);
+    width: 100vw;
+}
+
+/* ==========================================================================
+   Loading Spinner in Editor
+   ========================================================================== */
+
+.wprh-editor-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    color: #757575;
+}
+
+.wprh-editor-loading .components-spinner {
+    margin-right: 10px;
+}
+
+/* ==========================================================================
+   Preview Notice
+   ========================================================================== */
+
+.wprh-preview-notice {
+    padding: 12px 16px;
+    background: #fff8e5;
+    border-left: 4px solid #dba617;
+    margin-bottom: 15px;
+    font-size: 13px;
+    color: #5a5a5a;
+}
+
+/* ==========================================================================
+   Grid Preview in Editor
+   ========================================================================== */
+
+.editor-styles-wrapper .wprh-resources-grid {
+    display: grid;
+    gap: 20px;
+}
+
+.editor-styles-wrapper .wprh-resources-grid.wprh-layout-grid.wprh-columns-1 {
+    grid-template-columns: 1fr;
+}
+
+.editor-styles-wrapper .wprh-resources-grid.wprh-layout-grid.wprh-columns-2 {
+    grid-template-columns: repeat(2, 1fr);
+}
+
+.editor-styles-wrapper .wprh-resources-grid.wprh-layout-grid.wprh-columns-3 {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.editor-styles-wrapper .wprh-resources-grid.wprh-layout-grid.wprh-columns-4 {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.editor-styles-wrapper .wprh-resources-grid.wprh-layout-grid.wprh-columns-5 {
+    grid-template-columns: repeat(5, 1fr);
+}
+
+.editor-styles-wrapper .wprh-resources-grid.wprh-layout-grid.wprh-columns-6 {
+    grid-template-columns: repeat(6, 1fr);
+}
+
+/* Resource Card in Editor */
+.editor-styles-wrapper .wprh-resource-card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.editor-styles-wrapper .wprh-card-media {
+    aspect-ratio: 16 / 10;
+    background: #f0f0f1;
+    position: relative;
+}
+
+.editor-styles-wrapper .wprh-card-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.editor-styles-wrapper .wprh-card-body {
+    padding: 15px;
+}
+
+.editor-styles-wrapper .wprh-card-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 0 0 8px;
+    line-height: 1.4;
+}
+
+.editor-styles-wrapper .wprh-card-title a {
+    color: inherit;
+    text-decoration: none;
+}
+
+.editor-styles-wrapper .wprh-card-excerpt {
+    font-size: 13px;
+    color: #666;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* ==========================================================================
+   Collection Preview in Editor
+   ========================================================================== */
+
+.editor-styles-wrapper .wprh-collection {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.editor-styles-wrapper .wprh-collection-header {
+    padding: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.editor-styles-wrapper .wprh-collection-title {
+    font-size: 1.25rem;
+    margin: 0 0 8px;
+}
+
+.editor-styles-wrapper .wprh-collection-resources {
+    padding: 15px;
+}
+
+/* List items in editor */
+.editor-styles-wrapper .wprh-list-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.editor-styles-wrapper .wprh-list-item:last-child {
+    border-bottom: none;
+}
+
+.editor-styles-wrapper .wprh-list-number {
+    flex: 0 0 24px;
+    text-align: center;
+    font-size: 13px;
+    color: #8c8f94;
+}
+
+.editor-styles-wrapper .wprh-list-title {
+    font-size: 14px;
+    margin: 0;
+}
+
+/* Playlist items in editor */
+.editor-styles-wrapper .wprh-playlist-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.editor-styles-wrapper .wprh-playlist-item:last-child {
+    border-bottom: none;
+}
+
+/* ==========================================================================
+   No Resources Notice
+   ========================================================================== */
+
+.editor-styles-wrapper .wprh-no-resources {
+    padding: 40px 20px;
+    text-align: center;
+    background: #f8f9fa;
+    border-radius: 8px;
+    color: #666;
+}
+
+.editor-styles-wrapper .wprh-collection-empty {
+    padding: 30px 20px;
+    text-align: center;
+    color: #666;
+}
+
+/* ==========================================================================
+   Type Badges in Editor
+   ========================================================================== */
+
+.editor-styles-wrapper .wprh-card-type {
+    position: absolute;
+    bottom: 8px;
+    left: 8px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: rgba(0, 0, 0, 0.75);
+    color: #fff;
+    font-size: 11px;
+    border-radius: 4px;
+}
+
+.editor-styles-wrapper .wprh-card-type .dashicons {
+    font-size: 12px;
+    width: 12px;
+    height: 12px;
+}
+
+/* ==========================================================================
+   Filter Bar in Editor (non-functional preview)
+   ========================================================================== */
+
+.editor-styles-wrapper .wprh-resources-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.editor-styles-wrapper .wprh-search-input {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.editor-styles-wrapper .wprh-filter-select {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 13px;
+    background: #fff;
+}
+
+/* ==========================================================================
+   Pagination Preview
+   ========================================================================== */
+
+.editor-styles-wrapper .wprh-resources-pagination {
+    margin-top: 20px;
+    pointer-events: none;
+}
+
+.editor-styles-wrapper .wprh-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.editor-styles-wrapper .wprh-page-btn {
+    padding: 8px 14px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 13px;
+    color: #333;
+}
+
+.editor-styles-wrapper .wprh-page-info {
+    font-size: 13px;
+    color: #666;
+}
