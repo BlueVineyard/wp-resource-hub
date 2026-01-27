@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Resources Shortcode class.
  *
@@ -15,9 +16,10 @@ use WPResourceHub\Taxonomies\ResourceTypeTax;
 use WPResourceHub\Taxonomies\ResourceTopicTax;
 use WPResourceHub\Taxonomies\ResourceAudienceTax;
 use WPResourceHub\Admin\SettingsPage;
+use WPResourceHub\Helpers;
 
 // Prevent direct access.
-if ( ! defined( 'ABSPATH' ) ) {
+if (! defined('ABSPATH')) {
     exit;
 }
 
@@ -26,7 +28,8 @@ if ( ! defined( 'ABSPATH' ) ) {
  *
  * @since 1.2.0
  */
-class ResourcesShortcode {
+class ResourcesShortcode
+{
 
     /**
      * Singleton instance.
@@ -49,8 +52,9 @@ class ResourcesShortcode {
      *
      * @return ResourcesShortcode
      */
-    public static function get_instance() {
-        if ( null === self::$instance ) {
+    public static function get_instance()
+    {
+        if (null === self::$instance) {
             self::$instance = new self();
         }
         return self::$instance;
@@ -61,10 +65,11 @@ class ResourcesShortcode {
      *
      * @since 1.2.0
      */
-    private function __construct() {
-        add_shortcode( self::TAG, array( $this, 'render' ) );
-        add_action( 'wp_ajax_wprh_filter_resources', array( $this, 'ajax_filter' ) );
-        add_action( 'wp_ajax_nopriv_wprh_filter_resources', array( $this, 'ajax_filter' ) );
+    private function __construct()
+    {
+        add_shortcode(self::TAG, array($this, 'render'));
+        add_action('wp_ajax_wprh_filter_resources', array($this, 'ajax_filter'));
+        add_action('wp_ajax_nopriv_wprh_filter_resources', array($this, 'ajax_filter'));
     }
 
     /**
@@ -74,20 +79,21 @@ class ResourcesShortcode {
      *
      * @return array
      */
-    private function get_defaults() {
+    private function get_defaults()
+    {
         return array(
-            'layout'          => SettingsPage::get_setting( 'frontend', 'default_layout', 'grid' ),
+            'layout'          => SettingsPage::get_setting('frontend', 'default_layout', 'grid'),
             'columns'         => 3,
-            'limit'           => SettingsPage::get_setting( 'frontend', 'items_per_page', 12 ),
+            'limit'           => SettingsPage::get_setting('frontend', 'items_per_page', 12),
             'type'            => '',
             'topic'           => '',
             'audience'        => '',
-            'orderby'         => SettingsPage::get_setting( 'general', 'default_ordering', 'date' ),
+            'orderby'         => SettingsPage::get_setting('general', 'default_ordering', 'date'),
             'order'           => 'DESC',
             'show_filters'    => 'true',
-            'show_type_filter'     => SettingsPage::get_setting( 'frontend', 'enable_type_filter', true ) ? 'true' : 'false',
-            'show_topic_filter'    => SettingsPage::get_setting( 'frontend', 'enable_topic_filter', true ) ? 'true' : 'false',
-            'show_audience_filter' => SettingsPage::get_setting( 'frontend', 'enable_audience_filter', true ) ? 'true' : 'false',
+            'show_type_filter'     => SettingsPage::get_setting('frontend', 'enable_type_filter', true) ? 'true' : 'false',
+            'show_topic_filter'    => SettingsPage::get_setting('frontend', 'enable_topic_filter', true) ? 'true' : 'false',
+            'show_audience_filter' => SettingsPage::get_setting('frontend', 'enable_audience_filter', true) ? 'true' : 'false',
             'show_search'     => 'true',
             'show_pagination' => 'true',
             'featured_only'   => 'false',
@@ -107,60 +113,58 @@ class ResourcesShortcode {
      * @param string $content Shortcode content.
      * @return string
      */
-    public function render( $atts, $content = '' ) {
-        $atts = shortcode_atts( $this->get_defaults(), $atts, self::TAG );
+    public function render($atts, $content = '')
+    {
+        $atts = shortcode_atts($this->get_defaults(), $atts, self::TAG);
 
         // Normalize boolean attributes.
-        $atts['show_filters']         = filter_var( $atts['show_filters'], FILTER_VALIDATE_BOOLEAN );
-        $atts['show_type_filter']     = filter_var( $atts['show_type_filter'], FILTER_VALIDATE_BOOLEAN );
-        $atts['show_topic_filter']    = filter_var( $atts['show_topic_filter'], FILTER_VALIDATE_BOOLEAN );
-        $atts['show_audience_filter'] = filter_var( $atts['show_audience_filter'], FILTER_VALIDATE_BOOLEAN );
-        $atts['show_search']          = filter_var( $atts['show_search'], FILTER_VALIDATE_BOOLEAN );
-        $atts['show_pagination']      = filter_var( $atts['show_pagination'], FILTER_VALIDATE_BOOLEAN );
-        $atts['featured_only']        = filter_var( $atts['featured_only'], FILTER_VALIDATE_BOOLEAN );
+        $atts['show_filters']         = filter_var($atts['show_filters'], FILTER_VALIDATE_BOOLEAN);
+        $atts['show_type_filter']     = filter_var($atts['show_type_filter'], FILTER_VALIDATE_BOOLEAN);
+        $atts['show_topic_filter']    = filter_var($atts['show_topic_filter'], FILTER_VALIDATE_BOOLEAN);
+        $atts['show_audience_filter'] = filter_var($atts['show_audience_filter'], FILTER_VALIDATE_BOOLEAN);
+        $atts['show_search']          = filter_var($atts['show_search'], FILTER_VALIDATE_BOOLEAN);
+        $atts['show_pagination']      = filter_var($atts['show_pagination'], FILTER_VALIDATE_BOOLEAN);
+        $atts['featured_only']        = filter_var($atts['featured_only'], FILTER_VALIDATE_BOOLEAN);
 
         // Enqueue assets.
         $this->enqueue_assets();
 
         // Build query args.
-        $query_args = $this->build_query_args( $atts );
+        $query_args = $this->build_query_args($atts);
 
         // Get resources.
-        $query = new \WP_Query( $query_args );
+        $query = new \WP_Query($query_args);
 
         // Generate unique ID for this instance.
-        $instance_id = ! empty( $atts['id'] ) ? $atts['id'] : 'wprh-resources-' . wp_unique_id();
+        $instance_id = ! empty($atts['id']) ? $atts['id'] : 'wprh-resources-' . wp_unique_id();
 
         ob_start();
-        ?>
-        <div id="<?php echo esc_attr( $instance_id ); ?>"
-             class="wprh-resources-container <?php echo esc_attr( $atts['class'] ); ?>"
-             data-atts="<?php echo esc_attr( wp_json_encode( $atts ) ); ?>">
+?>
+        <div id="<?php echo esc_attr($instance_id); ?>" class="wprh-resources-container <?php echo esc_attr($atts['class']); ?>"
+            data-atts="<?php echo esc_attr(wp_json_encode($atts)); ?>">
 
-            <?php if ( $atts['show_filters'] || $atts['show_search'] ) : ?>
+            <?php if ($atts['show_filters'] || $atts['show_search']) : ?>
                 <div class="wprh-resources-toolbar">
-                    <?php if ( $atts['show_search'] ) : ?>
+                    <?php if ($atts['show_search']) : ?>
                         <div class="wprh-resources-search">
-                            <input type="text"
-                                   class="wprh-search-input"
-                                   placeholder="<?php esc_attr_e( 'Search resources...', 'wp-resource-hub' ); ?>"
-                                   value="">
+                            <input type="text" class="wprh-search-input"
+                                placeholder="<?php esc_attr_e('Search resources...', 'wp-resource-hub'); ?>" value="">
                             <span class="wprh-search-icon dashicons dashicons-search"></span>
                         </div>
                     <?php endif; ?>
 
-                    <?php if ( $atts['show_filters'] ) : ?>
+                    <?php if ($atts['show_filters']) : ?>
                         <div class="wprh-resources-filters">
-                            <?php if ( $atts['show_type_filter'] ) : ?>
-                                <?php echo $this->render_filter_dropdown( 'type', ResourceTypeTax::get_taxonomy(), __( 'All Types', 'wp-resource-hub' ), $atts['type'] ); ?>
+                            <?php if ($atts['show_type_filter']) : ?>
+                                <?php echo $this->render_filter_dropdown('type', ResourceTypeTax::get_taxonomy(), __('All Types', 'wp-resource-hub'), $atts['type']); ?>
                             <?php endif; ?>
 
-                            <?php if ( $atts['show_topic_filter'] ) : ?>
-                                <?php echo $this->render_filter_dropdown( 'topic', ResourceTopicTax::get_taxonomy(), __( 'All Topics', 'wp-resource-hub' ), $atts['topic'] ); ?>
+                            <?php if ($atts['show_topic_filter']) : ?>
+                                <?php echo $this->render_filter_dropdown('topic', ResourceTopicTax::get_taxonomy(), __('All Topics', 'wp-resource-hub'), $atts['topic']); ?>
                             <?php endif; ?>
 
-                            <?php if ( $atts['show_audience_filter'] ) : ?>
-                                <?php echo $this->render_filter_dropdown( 'audience', ResourceAudienceTax::get_taxonomy(), __( 'All Audiences', 'wp-resource-hub' ), $atts['audience'] ); ?>
+                            <?php if ($atts['show_audience_filter']) : ?>
+                                <?php echo $this->render_filter_dropdown('audience', ResourceAudienceTax::get_taxonomy(), __('All Audiences', 'wp-resource-hub'), $atts['audience']); ?>
                             <?php endif; ?>
                         </div>
                     <?php endif; ?>
@@ -170,19 +174,19 @@ class ResourcesShortcode {
             <div class="wprh-resources-grid-wrapper">
                 <div class="wprh-resources-loading" style="display: none;">
                     <span class="wprh-spinner"></span>
-                    <?php esc_html_e( 'Loading...', 'wp-resource-hub' ); ?>
+                    <?php esc_html_e('Loading...', 'wp-resource-hub'); ?>
                 </div>
 
-                <?php echo $this->render_resources( $query, $atts ); ?>
+                <?php echo $this->render_resources($query, $atts); ?>
             </div>
 
-            <?php if ( $atts['show_pagination'] && $query->max_num_pages > 1 ) : ?>
+            <?php if ($atts['show_pagination'] && $query->max_num_pages > 1) : ?>
                 <div class="wprh-resources-pagination">
-                    <?php echo $this->render_pagination( $query, 1 ); ?>
+                    <?php echo $this->render_pagination($query, 1); ?>
                 </div>
             <?php endif; ?>
         </div>
-        <?php
+    <?php
         return ob_get_clean();
     }
 
@@ -195,50 +199,51 @@ class ResourcesShortcode {
      * @param int   $paged Current page number.
      * @return array
      */
-    private function build_query_args( $atts, $paged = 1 ) {
+    private function build_query_args($atts, $paged = 1)
+    {
         $args = array(
             'post_type'      => ResourcePostType::get_post_type(),
             'post_status'    => 'publish',
-            'posts_per_page' => intval( $atts['limit'] ),
+            'posts_per_page' => intval($atts['limit']),
             'paged'          => $paged,
             'orderby'        => $atts['orderby'],
-            'order'          => strtoupper( $atts['order'] ),
+            'order'          => strtoupper($atts['order']),
         );
 
         // Tax query.
         $tax_query = array();
 
-        if ( ! empty( $atts['type'] ) ) {
+        if (! empty($atts['type'])) {
             $tax_query[] = array(
                 'taxonomy' => ResourceTypeTax::get_taxonomy(),
                 'field'    => 'slug',
-                'terms'    => array_map( 'trim', explode( ',', $atts['type'] ) ),
+                'terms'    => array_map('trim', explode(',', $atts['type'])),
             );
         }
 
-        if ( ! empty( $atts['topic'] ) ) {
+        if (! empty($atts['topic'])) {
             $tax_query[] = array(
                 'taxonomy' => ResourceTopicTax::get_taxonomy(),
                 'field'    => 'slug',
-                'terms'    => array_map( 'trim', explode( ',', $atts['topic'] ) ),
+                'terms'    => array_map('trim', explode(',', $atts['topic'])),
             );
         }
 
-        if ( ! empty( $atts['audience'] ) ) {
+        if (! empty($atts['audience'])) {
             $tax_query[] = array(
                 'taxonomy' => ResourceAudienceTax::get_taxonomy(),
                 'field'    => 'slug',
-                'terms'    => array_map( 'trim', explode( ',', $atts['audience'] ) ),
+                'terms'    => array_map('trim', explode(',', $atts['audience'])),
             );
         }
 
-        if ( ! empty( $tax_query ) ) {
+        if (! empty($tax_query)) {
             $tax_query['relation'] = 'AND';
             $args['tax_query'] = $tax_query;
         }
 
         // Meta query for featured.
-        if ( $atts['featured_only'] ) {
+        if ($atts['featured_only']) {
             $args['meta_query'] = array(
                 array(
                     'key'   => '_wprh_featured',
@@ -248,17 +253,17 @@ class ResourcesShortcode {
         }
 
         // Include/exclude.
-        if ( ! empty( $atts['include'] ) ) {
-            $args['post__in'] = array_map( 'absint', explode( ',', $atts['include'] ) );
+        if (! empty($atts['include'])) {
+            $args['post__in'] = array_map('absint', explode(',', $atts['include']));
         }
 
-        if ( ! empty( $atts['exclude'] ) ) {
-            $args['post__not_in'] = array_map( 'absint', explode( ',', $atts['exclude'] ) );
+        if (! empty($atts['exclude'])) {
+            $args['post__not_in'] = array_map('absint', explode(',', $atts['exclude']));
         }
 
         // Search.
-        if ( ! empty( $atts['search'] ) ) {
-            $args['s'] = sanitize_text_field( $atts['search'] );
+        if (! empty($atts['search'])) {
+            $args['s'] = sanitize_text_field($atts['search']);
         }
 
         /**
@@ -269,7 +274,7 @@ class ResourcesShortcode {
          * @param array $args Query arguments.
          * @param array $atts Shortcode attributes.
          */
-        return apply_filters( 'wprh_resources_query_args', $args, $atts );
+        return apply_filters('wprh_resources_query_args', $args, $atts);
     }
 
     /**
@@ -281,26 +286,27 @@ class ResourcesShortcode {
      * @param array     $atts  Shortcode attributes.
      * @return string
      */
-    public function render_resources( $query, $atts ) {
-        if ( ! $query->have_posts() ) {
+    public function render_resources($query, $atts)
+    {
+        if (! $query->have_posts()) {
             return '<div class="wprh-no-resources">' .
-                   esc_html__( 'No resources found.', 'wp-resource-hub' ) .
-                   '</div>';
+                esc_html__('No resources found.', 'wp-resource-hub') .
+                '</div>';
         }
 
-        $layout_class = 'wprh-layout-' . esc_attr( $atts['layout'] );
-        $columns_class = 'wprh-columns-' . intval( $atts['columns'] );
+        $layout_class = 'wprh-layout-' . esc_attr($atts['layout']);
+        $columns_class = 'wprh-columns-' . intval($atts['columns']);
 
         ob_start();
-        ?>
-        <div class="wprh-resources-grid <?php echo esc_attr( $layout_class . ' ' . $columns_class ); ?>">
-            <?php while ( $query->have_posts() ) : ?>
+    ?>
+        <div class="wprh-resources-grid <?php echo esc_attr($layout_class . ' ' . $columns_class); ?>">
+            <?php while ($query->have_posts()) : ?>
                 <?php $query->the_post(); ?>
-                <?php echo $this->render_resource_card( get_post(), $atts ); ?>
+                <?php echo $this->render_resource_card(get_post(), $atts); ?>
             <?php endwhile; ?>
             <?php wp_reset_postdata(); ?>
         </div>
-        <?php
+    <?php
         return ob_get_clean();
     }
 
@@ -313,64 +319,89 @@ class ResourcesShortcode {
      * @param array    $atts Shortcode attributes.
      * @return string
      */
-    private function render_resource_card( $post, $atts ) {
-        $resource_type = ResourceTypeTax::get_resource_type( $post->ID );
+    private function render_resource_card($post, $atts)
+    {
+        $resource_type = ResourceTypeTax::get_resource_type($post->ID);
         $type_slug     = $resource_type ? $resource_type->slug : '';
-        $type_icon     = $resource_type ? ResourceTypeTax::get_type_icon( $resource_type ) : 'dashicons-media-default';
+        $type_icon     = $resource_type ? ResourceTypeTax::get_type_icon($resource_type) : 'dashicons-media-default';
 
         ob_start();
-        ?>
-        <article class="wprh-resource-card wprh-type-<?php echo esc_attr( $type_slug ); ?>" data-id="<?php echo esc_attr( $post->ID ); ?>">
+    ?>
+        <article class="wprh-resource-card wprh-type-<?php echo esc_attr($type_slug); ?>"
+            data-id="<?php echo esc_attr($post->ID); ?>">
             <div class="wprh-card-media">
-                <?php if ( has_post_thumbnail( $post ) ) : ?>
-                    <a href="<?php echo esc_url( get_permalink( $post ) ); ?>" class="wprh-card-image">
-                        <?php echo get_the_post_thumbnail( $post, 'medium_large' ); ?>
+                <?php
+                $thumbnail = Helpers::get_resource_thumbnail($post, 'medium_large');
+                if (! empty($thumbnail)) : ?>
+                    <a href="<?php echo esc_url(get_permalink($post)); ?>" class="wprh-card-image">
+                        <?php echo $thumbnail; ?>
                     </a>
                 <?php else : ?>
-                    <a href="<?php echo esc_url( get_permalink( $post ) ); ?>" class="wprh-card-image wprh-card-placeholder">
-                        <span class="dashicons <?php echo esc_attr( $type_icon ); ?>"></span>
+                    <a href="<?php echo esc_url(get_permalink($post)); ?>" class="wprh-card-image wprh-card-placeholder">
+                        <span class="dashicons <?php echo esc_attr($type_icon); ?>"></span>
                     </a>
                 <?php endif; ?>
 
-                <?php if ( $resource_type ) : ?>
-                    <span class="wprh-card-type wprh-type-badge-<?php echo esc_attr( $type_slug ); ?>">
-                        <span class="dashicons <?php echo esc_attr( $type_icon ); ?>"></span>
-                        <?php echo esc_html( $resource_type->name ); ?>
+                <?php
+                // Display video duration for video resources.
+                if ($type_slug === 'video') {
+                    $duration = get_post_meta($post->ID, '_wprh_video_duration', true);
+                    if ($duration) : ?>
+                        <span class="wprh-video-duration-badge">
+                            <?php echo esc_html($duration); ?>
+                        </span>
+                <?php endif;
+                }
+                ?>
+
+                <?php if ($resource_type) : ?>
+                    <span class="wprh-card-type wprh-type-badge-<?php echo esc_attr($type_slug); ?>">
+                        <span class="dashicons <?php echo esc_attr($type_icon); ?>"></span>
+                        <?php echo esc_html($resource_type->name); ?>
                     </span>
                 <?php endif; ?>
             </div>
 
             <div class="wprh-card-body">
                 <h3 class="wprh-card-title">
-                    <a href="<?php echo esc_url( get_permalink( $post ) ); ?>">
-                        <?php echo esc_html( get_the_title( $post ) ); ?>
+                    <a href="<?php echo esc_url(get_permalink($post)); ?>">
+                        <?php echo esc_html(get_the_title($post)); ?>
                     </a>
                 </h3>
 
-                <?php if ( has_excerpt( $post ) || ! empty( $post->post_content ) ) : ?>
+                <?php if (has_excerpt($post) || ! empty($post->post_content)) : ?>
                     <div class="wprh-card-excerpt">
-                        <?php echo wp_trim_words( get_the_excerpt( $post ), 20, '...' ); ?>
+                        <?php echo wp_trim_words(get_the_excerpt($post), 20, '...'); ?>
                     </div>
                 <?php endif; ?>
 
-                <div class="wprh-card-meta">
-                    <?php
-                    $topics = get_the_term_list( $post->ID, ResourceTopicTax::get_taxonomy(), '', ', ', '' );
-                    if ( $topics && ! is_wp_error( $topics ) ) :
-                    ?>
-                        <span class="wprh-card-topics"><?php echo $topics; ?></span>
-                    <?php endif; ?>
-                </div>
             </div>
 
             <div class="wprh-card-footer">
-                <a href="<?php echo esc_url( get_permalink( $post ) ); ?>" class="wprh-card-link">
-                    <?php esc_html_e( 'View Resource', 'wp-resource-hub' ); ?>
-                    <span class="dashicons dashicons-arrow-right-alt2"></span>
-                </a>
+                <?php
+                // Get topics and audiences.
+                $topics = get_the_terms($post->ID, ResourceTopicTax::get_taxonomy());
+                $audiences = get_the_terms($post->ID, ResourceAudienceTax::get_taxonomy());
+                ?>
+
+                <?php if ($topics && ! is_wp_error($topics)) : ?>
+                    <?php foreach ($topics as $topic) : ?>
+                        <a href="<?php echo esc_url(get_term_link($topic)); ?>" class="wprh-card-pill wprh-pill-topic">
+                            <?php echo esc_html($topic->name); ?>
+                        </a>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+
+                <?php if ($audiences && ! is_wp_error($audiences)) : ?>
+                    <?php foreach ($audiences as $audience) : ?>
+                        <a href="<?php echo esc_url(get_term_link($audience)); ?>" class="wprh-card-pill wprh-pill-audience">
+                            <?php echo esc_html($audience->name); ?>
+                        </a>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </div>
         </article>
-        <?php
+    <?php
         return ob_get_clean();
     }
 
@@ -385,7 +416,8 @@ class ResourcesShortcode {
      * @param string $selected   Selected value.
      * @return string
      */
-    private function render_filter_dropdown( $filter_key, $taxonomy, $all_label, $selected = '' ) {
+    private function render_filter_dropdown($filter_key, $taxonomy, $all_label, $selected = '')
+    {
         $terms = get_terms(
             array(
                 'taxonomy'   => $taxonomy,
@@ -393,21 +425,21 @@ class ResourcesShortcode {
             )
         );
 
-        if ( empty( $terms ) || is_wp_error( $terms ) ) {
+        if (empty($terms) || is_wp_error($terms)) {
             return '';
         }
 
         ob_start();
-        ?>
-        <select class="wprh-filter-select" data-filter="<?php echo esc_attr( $filter_key ); ?>">
-            <option value=""><?php echo esc_html( $all_label ); ?></option>
-            <?php foreach ( $terms as $term ) : ?>
-                <option value="<?php echo esc_attr( $term->slug ); ?>" <?php selected( $selected, $term->slug ); ?>>
-                    <?php echo esc_html( $term->name ); ?>
+    ?>
+        <select class="wprh-filter-select" data-filter="<?php echo esc_attr($filter_key); ?>">
+            <option value=""><?php echo esc_html($all_label); ?></option>
+            <?php foreach ($terms as $term) : ?>
+                <option value="<?php echo esc_attr($term->slug); ?>" <?php selected($selected, $term->slug); ?>>
+                    <?php echo esc_html($term->name); ?>
                 </option>
             <?php endforeach; ?>
         </select>
-        <?php
+    <?php
         return ob_get_clean();
     }
 
@@ -420,34 +452,36 @@ class ResourcesShortcode {
      * @param int       $current Current page.
      * @return string
      */
-    public function render_pagination( $query, $current = 1 ) {
+    public function render_pagination($query, $current = 1)
+    {
         $total = $query->max_num_pages;
 
-        if ( $total <= 1 ) {
+        if ($total <= 1) {
             return '';
         }
 
         ob_start();
-        ?>
-        <div class="wprh-pagination" data-current="<?php echo esc_attr( $current ); ?>" data-total="<?php echo esc_attr( $total ); ?>">
-            <button type="button" class="wprh-page-btn wprh-prev" <?php disabled( $current, 1 ); ?>>
+    ?>
+        <div class="wprh-pagination" data-current="<?php echo esc_attr($current); ?>"
+            data-total="<?php echo esc_attr($total); ?>">
+            <button type="button" class="wprh-page-btn wprh-prev" <?php disabled($current, 1); ?>>
                 <span class="dashicons dashicons-arrow-left-alt2"></span>
-                <?php esc_html_e( 'Previous', 'wp-resource-hub' ); ?>
+                <?php esc_html_e('Previous', 'wp-resource-hub'); ?>
             </button>
 
             <span class="wprh-page-info">
                 <?php
                 /* translators: 1: Current page, 2: Total pages */
-                printf( esc_html__( 'Page %1$d of %2$d', 'wp-resource-hub' ), $current, $total );
+                printf(esc_html__('Page %1$d of %2$d', 'wp-resource-hub'), $current, $total);
                 ?>
             </span>
 
-            <button type="button" class="wprh-page-btn wprh-next" <?php disabled( $current, $total ); ?>>
-                <?php esc_html_e( 'Next', 'wp-resource-hub' ); ?>
+            <button type="button" class="wprh-page-btn wprh-next" <?php disabled($current, $total); ?>>
+                <?php esc_html_e('Next', 'wp-resource-hub'); ?>
                 <span class="dashicons dashicons-arrow-right-alt2"></span>
             </button>
         </div>
-        <?php
+<?php
         return ob_get_clean();
     }
 
@@ -458,36 +492,37 @@ class ResourcesShortcode {
      *
      * @return void
      */
-    public function ajax_filter() {
-        check_ajax_referer( 'wprh_frontend_nonce', 'nonce' );
+    public function ajax_filter()
+    {
+        check_ajax_referer('wprh_frontend_nonce', 'nonce');
 
-        $atts = isset( $_POST['atts'] ) ? json_decode( stripslashes( $_POST['atts'] ), true ) : array();
-        $atts = shortcode_atts( $this->get_defaults(), $atts );
+        $atts = isset($_POST['atts']) ? json_decode(stripslashes($_POST['atts']), true) : array();
+        $atts = shortcode_atts($this->get_defaults(), $atts);
 
         // Override with filter values.
-        if ( isset( $_POST['type'] ) ) {
-            $atts['type'] = sanitize_text_field( $_POST['type'] );
+        if (isset($_POST['type'])) {
+            $atts['type'] = sanitize_text_field($_POST['type']);
         }
-        if ( isset( $_POST['topic'] ) ) {
-            $atts['topic'] = sanitize_text_field( $_POST['topic'] );
+        if (isset($_POST['topic'])) {
+            $atts['topic'] = sanitize_text_field($_POST['topic']);
         }
-        if ( isset( $_POST['audience'] ) ) {
-            $atts['audience'] = sanitize_text_field( $_POST['audience'] );
+        if (isset($_POST['audience'])) {
+            $atts['audience'] = sanitize_text_field($_POST['audience']);
         }
-        if ( isset( $_POST['search'] ) ) {
-            $atts['search'] = sanitize_text_field( $_POST['search'] );
+        if (isset($_POST['search'])) {
+            $atts['search'] = sanitize_text_field($_POST['search']);
         }
 
-        $paged = isset( $_POST['paged'] ) ? absint( $_POST['paged'] ) : 1;
+        $paged = isset($_POST['paged']) ? absint($_POST['paged']) : 1;
 
         // Build query.
-        $query_args = $this->build_query_args( $atts, $paged );
-        $query = new \WP_Query( $query_args );
+        $query_args = $this->build_query_args($atts, $paged);
+        $query = new \WP_Query($query_args);
 
         wp_send_json_success(
             array(
-                'html'       => $this->render_resources( $query, $atts ),
-                'pagination' => $this->render_pagination( $query, $paged ),
+                'html'       => $this->render_resources($query, $atts),
+                'pagination' => $this->render_pagination($query, $paged),
                 'found'      => $query->found_posts,
                 'max_pages'  => $query->max_num_pages,
             )
@@ -501,7 +536,8 @@ class ResourcesShortcode {
      *
      * @return void
      */
-    private function enqueue_assets() {
+    private function enqueue_assets()
+    {
         wp_enqueue_style(
             'wprh-frontend',
             WPRH_PLUGIN_URL . 'assets/css/frontend.css',
@@ -512,7 +548,7 @@ class ResourcesShortcode {
         wp_enqueue_script(
             'wprh-frontend',
             WPRH_PLUGIN_URL . 'assets/js/frontend.js',
-            array( 'jquery' ),
+            array('jquery'),
             WPRH_VERSION,
             true
         );
@@ -521,12 +557,12 @@ class ResourcesShortcode {
             'wprh-frontend',
             'wprhFrontend',
             array(
-                'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-                'nonce'   => wp_create_nonce( 'wprh_frontend_nonce' ),
+                'ajaxUrl' => admin_url('admin-ajax.php'),
+                'nonce'   => wp_create_nonce('wprh_frontend_nonce'),
                 'i18n'    => array(
-                    'loading'    => __( 'Loading...', 'wp-resource-hub' ),
-                    'noResults'  => __( 'No resources found.', 'wp-resource-hub' ),
-                    'error'      => __( 'An error occurred. Please try again.', 'wp-resource-hub' ),
+                    'loading'    => __('Loading...', 'wp-resource-hub'),
+                    'noResults'  => __('No resources found.', 'wp-resource-hub'),
+                    'error'      => __('An error occurred. Please try again.', 'wp-resource-hub'),
                 ),
             )
         );

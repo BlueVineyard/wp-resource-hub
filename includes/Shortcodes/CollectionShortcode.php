@@ -13,6 +13,7 @@ namespace WPResourceHub\Shortcodes;
 
 use WPResourceHub\PostTypes\CollectionPostType;
 use WPResourceHub\Taxonomies\ResourceTypeTax;
+use WPResourceHub\Helpers;
 
 // Prevent direct access.
 if (! defined('ABSPATH')) {
@@ -284,9 +285,11 @@ class CollectionShortcode
             <article class="wprh-resource-card wprh-collection-card wprh-type-<?php echo esc_attr($type_slug); ?>"
                 data-resource-id="<?php echo esc_attr($resource->ID); ?>">
                 <div class="wprh-card-media">
-                    <?php if (has_post_thumbnail($resource)) : ?>
+                    <?php
+                    $thumbnail = Helpers::get_resource_thumbnail($resource, 'medium');
+                    if (! empty($thumbnail)) : ?>
                         <a href="<?php echo esc_url(get_permalink($resource)); ?>" class="wprh-card-image">
-                            <?php echo get_the_post_thumbnail($resource, 'medium'); ?>
+                            <?php echo $thumbnail; ?>
                         </a>
                     <?php else : ?>
                         <a href="<?php echo esc_url(get_permalink($resource)); ?>" class="wprh-card-image wprh-card-placeholder">
@@ -318,10 +321,12 @@ class CollectionShortcode
                 data-resource-id="<?php echo esc_attr($resource->ID); ?>">
                 <span class="wprh-list-number"><?php echo esc_html($index); ?></span>
 
-                <?php if (has_post_thumbnail($resource)) : ?>
+                <?php
+                $thumbnail = Helpers::get_resource_thumbnail($resource, 'thumbnail');
+                if (! empty($thumbnail)) : ?>
                     <div class="wprh-list-thumbnail">
                         <a href="<?php echo esc_url(get_permalink($resource)); ?>">
-                            <?php echo get_the_post_thumbnail($resource, 'thumbnail'); ?>
+                            <?php echo $thumbnail; ?>
                         </a>
                     </div>
                 <?php else : ?>

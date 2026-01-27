@@ -1,0 +1,10 @@
+# Video Overlay Image
+
+Please add a file named `video-overlay.webp` to this directory.
+This image will be used as the default overlay background for video resources that don't have a featured image/thumbnail set.
+
+The overlay will display with:
+
+- The background image (video-overlay.webp)
+- A radial gradient overlay
+- The video title in centered, uppercase text
