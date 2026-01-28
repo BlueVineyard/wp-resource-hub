@@ -1,9 +1,10 @@
 <?php
+
 /**
  * Plugin Name: WP Resource Hub
  * Plugin URI: https://example.com/wp-resource-hub
  * Description: A comprehensive resource management system for WordPress. Create, organize, and display videos, PDFs, downloads, external links, and internal content.
- * Version: 1.0.0
+ * Version: 1.0.2
  * Author: Your Company Name
  * Author URI: https://example.com
  * License: GPL-2.0-or-later
@@ -19,52 +20,53 @@
 namespace WPResourceHub;
 
 // Prevent direct access.
-if ( ! defined( 'ABSPATH' ) ) {
+if (! defined('ABSPATH')) {
     exit;
 }
 
 /**
  * Plugin version.
  */
-define( 'WPRH_VERSION', '1.0.0' );
+define('WPRH_VERSION', '1.0.2');
 
 /**
  * Plugin file path.
  */
-define( 'WPRH_PLUGIN_FILE', __FILE__ );
+define('WPRH_PLUGIN_FILE', __FILE__);
 
 /**
  * Plugin directory path.
  */
-define( 'WPRH_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
+define('WPRH_PLUGIN_DIR', plugin_dir_path(__FILE__));
 
 /**
  * Plugin directory URL.
  */
-define( 'WPRH_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+define('WPRH_PLUGIN_URL', plugin_dir_url(__FILE__));
 
 /**
  * Plugin basename.
  */
-define( 'WPRH_PLUGIN_BASENAME', plugin_basename( __FILE__ ) );
+define('WPRH_PLUGIN_BASENAME', plugin_basename(__FILE__));
 
 /**
  * Minimum PHP version required.
  */
-define( 'WPRH_MIN_PHP_VERSION', '7.4' );
+define('WPRH_MIN_PHP_VERSION', '7.4');
 
 /**
  * Minimum WordPress version required.
  */
-define( 'WPRH_MIN_WP_VERSION', '5.8' );
+define('WPRH_MIN_WP_VERSION', '5.8');
 
 /**
  * Check PHP version requirement.
  *
  * @return bool
  */
-function wprh_check_php_version() {
-    return version_compare( PHP_VERSION, WPRH_MIN_PHP_VERSION, '>=' );
+function wprh_check_php_version()
+{
+    return version_compare(PHP_VERSION, WPRH_MIN_PHP_VERSION, '>=');
 }
 
 /**
@@ -72,8 +74,9 @@ function wprh_check_php_version() {
  *
  * @return bool
  */
-function wprh_check_wp_version() {
-    return version_compare( get_bloginfo( 'version' ), WPRH_MIN_WP_VERSION, '>=' );
+function wprh_check_wp_version()
+{
+    return version_compare(get_bloginfo('version'), WPRH_MIN_WP_VERSION, '>=');
 }
 
 /**
@@ -81,29 +84,30 @@ function wprh_check_wp_version() {
  *
  * @return void
  */
-function wprh_version_notice() {
+function wprh_version_notice()
+{
     $message = '';
 
-    if ( ! wprh_check_php_version() ) {
+    if (! wprh_check_php_version()) {
         $message = sprintf(
             /* translators: 1: Required PHP version, 2: Current PHP version */
-            esc_html__( 'WP Resource Hub requires PHP version %1$s or higher. You are running version %2$s.', 'wp-resource-hub' ),
+            esc_html__('WP Resource Hub requires PHP version %1$s or higher. You are running version %2$s.', 'wp-resource-hub'),
             WPRH_MIN_PHP_VERSION,
             PHP_VERSION
         );
-    } elseif ( ! wprh_check_wp_version() ) {
+    } elseif (! wprh_check_wp_version()) {
         $message = sprintf(
             /* translators: 1: Required WordPress version, 2: Current WordPress version */
-            esc_html__( 'WP Resource Hub requires WordPress version %1$s or higher. You are running version %2$s.', 'wp-resource-hub' ),
+            esc_html__('WP Resource Hub requires WordPress version %1$s or higher. You are running version %2$s.', 'wp-resource-hub'),
             WPRH_MIN_WP_VERSION,
-            get_bloginfo( 'version' )
+            get_bloginfo('version')
         );
     }
 
-    if ( $message ) {
+    if ($message) {
         printf(
             '<div class="notice notice-error"><p>%s</p></div>',
-            esc_html( $message )
+            esc_html($message)
         );
     }
 }
@@ -113,10 +117,11 @@ function wprh_version_notice() {
  *
  * @return void
  */
-function wprh_init() {
+function wprh_init()
+{
     // Check version requirements.
-    if ( ! wprh_check_php_version() || ! wprh_check_wp_version() ) {
-        add_action( 'admin_notices', __NAMESPACE__ . '\\wprh_version_notice' );
+    if (! wprh_check_php_version() || ! wprh_check_wp_version()) {
+        add_action('admin_notices', __NAMESPACE__ . '\\wprh_version_notice');
         return;
     }
 
@@ -133,14 +138,15 @@ function wprh_init() {
  *
  * @return void
  */
-function wprh_activate() {
+function wprh_activate()
+{
     // Check version requirements.
-    if ( ! wprh_check_php_version() || ! wprh_check_wp_version() ) {
-        deactivate_plugins( WPRH_PLUGIN_BASENAME );
+    if (! wprh_check_php_version() || ! wprh_check_wp_version()) {
+        deactivate_plugins(WPRH_PLUGIN_BASENAME);
         wp_die(
-            esc_html__( 'WP Resource Hub cannot be activated due to version requirements. Please check your PHP and WordPress versions.', 'wp-resource-hub' ),
-            esc_html__( 'Plugin Activation Error', 'wp-resource-hub' ),
-            array( 'back_link' => true )
+            esc_html__('WP Resource Hub cannot be activated due to version requirements. Please check your PHP and WordPress versions.', 'wp-resource-hub'),
+            esc_html__('Plugin Activation Error', 'wp-resource-hub'),
+            array('back_link' => true)
         );
     }
 
@@ -162,17 +168,17 @@ function wprh_activate() {
     flush_rewrite_rules();
 
     // Set activation flag for welcome redirect.
-    set_transient( 'wprh_activation_redirect', true, 30 );
+    set_transient('wprh_activation_redirect', true, 30);
 
     // Store plugin version.
-    update_option( 'wprh_version', WPRH_VERSION );
+    update_option('wprh_version', WPRH_VERSION);
 
     /**
      * Fires after the plugin is activated.
      *
      * @since 1.0.0
      */
-    do_action( 'wprh_activated' );
+    do_action('wprh_activated');
 }
 
 /**
@@ -180,7 +186,8 @@ function wprh_activate() {
  *
  * @return void
  */
-function wprh_deactivate() {
+function wprh_deactivate()
+{
     // Flush rewrite rules.
     flush_rewrite_rules();
 
@@ -189,12 +196,12 @@ function wprh_deactivate() {
      *
      * @since 1.0.0
      */
-    do_action( 'wprh_deactivated' );
+    do_action('wprh_deactivated');
 }
 
 // Register activation and deactivation hooks.
-register_activation_hook( __FILE__, __NAMESPACE__ . '\\wprh_activate' );
-register_deactivation_hook( __FILE__, __NAMESPACE__ . '\\wprh_deactivate' );
+register_activation_hook(__FILE__, __NAMESPACE__ . '\\wprh_activate');
+register_deactivation_hook(__FILE__, __NAMESPACE__ . '\\wprh_deactivate');
 
 // Initialize the plugin.
-add_action( 'plugins_loaded', __NAMESPACE__ . '\\wprh_init' );
+add_action('plugins_loaded', __NAMESPACE__ . '\\wprh_init');

@@ -12,12 +12,14 @@ namespace WPResourceHub;
 
 use WPResourceHub\PostTypes\ResourcePostType;
 use WPResourceHub\PostTypes\CollectionPostType;
+use WPResourceHub\PostTypes\AccordionPostType;
 use WPResourceHub\Taxonomies\ResourceTypeTax;
 use WPResourceHub\Taxonomies\ResourceTopicTax;
 use WPResourceHub\Taxonomies\ResourceAudienceTax;
 use WPResourceHub\Admin\ResourceAdminUI;
 use WPResourceHub\Admin\MetaBoxes;
 use WPResourceHub\Admin\CollectionMetaBoxes;
+use WPResourceHub\Admin\AccordionMetaBoxes;
 use WPResourceHub\Admin\SettingsPage;
 use WPResourceHub\Admin\ListTableEnhancements;
 use WPResourceHub\Admin\ImportExportPage;
@@ -34,6 +36,7 @@ use WPResourceHub\AccessControl\AccessManager;
 use WPResourceHub\Shortcodes\ResourcesShortcode;
 use WPResourceHub\Shortcodes\ResourceShortcode;
 use WPResourceHub\Shortcodes\CollectionShortcode;
+use WPResourceHub\Shortcodes\AccordionShortcode;
 use WPResourceHub\Blocks\BlocksManager;
 
 // Prevent direct access.
@@ -147,6 +150,13 @@ final class Plugin {
     public $collection_post_type;
 
     /**
+     * Accordion post type instance.
+     *
+     * @var AccordionPostType
+     */
+    public $accordion_post_type;
+
+    /**
      * Stats manager instance.
      *
      * @var StatsManager
@@ -187,7 +197,7 @@ final class Plugin {
      * @since 1.0.0
      */
     private function __construct() {
-        $this->load_textdomain();
+        add_action( 'init', array( $this, 'load_textdomain' ), 0 );
         $this->init_components();
         $this->init_hooks();
     }
@@ -217,7 +227,7 @@ final class Plugin {
      *
      * @return void
      */
-    private function load_textdomain() {
+    public function load_textdomain() {
         load_plugin_textdomain(
             'wp-resource-hub',
             false,
@@ -254,6 +264,9 @@ final class Plugin {
 
             // Phase 2 admin components.
             CollectionMetaBoxes::get_instance();
+            if ( self::is_accordions_enabled() ) {
+                AccordionMetaBoxes::get_instance();
+            }
             ImportExportPage::get_instance();
             BulkActions::get_instance();
         }
@@ -264,6 +277,9 @@ final class Plugin {
 
         // Phase 2 components (both admin and frontend).
         $this->collection_post_type = CollectionPostType::get_instance();
+        if ( self::is_accordions_enabled() ) {
+            $this->accordion_post_type = AccordionPostType::get_instance();
+        }
         $this->stats_manager        = StatsManager::get_instance();
         $this->download_tracker     = DownloadTracker::get_instance();
         $this->access_manager       = AccessManager::get_instance();
@@ -276,6 +292,9 @@ final class Plugin {
         ResourcesShortcode::get_instance();
         ResourceShortcode::get_instance();
         CollectionShortcode::get_instance();
+        if ( self::is_accordions_enabled() ) {
+            AccordionShortcode::get_instance();
+        }
 
         // Phase 3: Gutenberg Blocks.
         BlocksManager::get_instance();
@@ -404,5 +423,17 @@ final class Plugin {
      */
     public function get_plugin_file() {
         return WPRH_PLUGIN_FILE;
+    }
+
+    /**
+     * Check if the accordion feature is enabled.
+     *
+     * @since 1.3.0
+     *
+     * @return bool
+     */
+    public static function is_accordions_enabled() {
+        $settings = get_option( 'wprh_general_settings', array() );
+        return ! empty( $settings['enable_accordions'] );
     }
 }

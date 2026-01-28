@@ -65,8 +65,19 @@ class ResourceAudienceTax {
      * @since 1.0.0
      */
     private function __construct() {
-        $this->set_default_audiences();
+        add_action( 'init', array( $this, 'init_default_audiences' ), 0 );
         add_action( 'wprh_activated', array( $this, 'create_default_terms' ) );
+    }
+
+    /**
+     * Initialize default audiences on init to avoid early translation loading.
+     *
+     * @since 1.0.0
+     *
+     * @return void
+     */
+    public function init_default_audiences() {
+        $this->set_default_audiences();
     }
 
     /**

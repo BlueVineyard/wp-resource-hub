@@ -129,55 +129,104 @@ class CollectionShortcode
         wp_enqueue_style('wprh-frontend', WPRH_PLUGIN_URL . 'assets/css/frontend.css', array(), WPRH_VERSION);
 
         ob_start();
+
+        // Special handling for nested-accordion layout
+        if ('nested-accordion' === $display_style) :
 ?>
-        <div class="wprh-collection wprh-collection-<?php echo esc_attr($display_style); ?> <?php echo esc_attr($atts['class']); ?>"
-            data-collection-id="<?php echo esc_attr($collection->ID); ?>">
+            <div class="wprh-collection wprh-collection-<?php echo esc_attr($display_style); ?> <?php echo esc_attr($atts['class']); ?>"
+                data-collection-id="<?php echo esc_attr($collection->ID); ?>">
 
-            <?php if ($atts['show_title'] || $atts['show_description'] || $atts['show_count']) : ?>
-                <header class="wprh-collection-header">
-                    <?php if ($atts['show_title']) : ?>
-                        <h2 class="wprh-collection-title">
-                            <a href="<?php echo esc_url(get_permalink($collection)); ?>">
+                <!-- Outer Accordion for Collection -->
+                <div class="wprh-collection-accordion-wrapper">
+                    <div class="wprh-collection-accordion-item">
+                        <button class="wprh-collection-accordion-trigger" aria-expanded="false">
+                            <span class="wprh-collection-accordion-title">
                                 <?php echo esc_html(get_the_title($collection)); ?>
-                            </a>
-                        </h2>
-                    <?php endif; ?>
+                            </span>
+                            <?php if ($atts['show_count']) : ?>
+                                <span class="wprh-collection-accordion-count">
+                                    <?php
+                                    /* translators: %d: Number of resources */
+                                    printf(esc_html(_n('%d resource', '%d resources', count($resource_ids), 'wp-resource-hub')), count($resource_ids));
+                                    ?>
+                                </span>
+                            <?php endif; ?>
+                            <span class="wprh-collection-accordion-arrow dashicons dashicons-arrow-down-alt2"></span>
+                        </button>
+                        <div class="wprh-collection-accordion-content">
+                            <div class="wprh-collection-accordion-inner">
+                                <?php if ($atts['show_description'] && has_excerpt($collection)) : ?>
+                                    <div class="wprh-collection-description">
+                                        <?php echo wp_kses_post(get_the_excerpt($collection)); ?>
+                                    </div>
+                                <?php endif; ?>
 
-                    <?php if ($atts['show_count']) : ?>
-                        <span class="wprh-collection-count">
-                            <?php
-                            /* translators: %d: Number of resources */
-                            printf(esc_html(_n('%d resource', '%d resources', count($resource_ids), 'wp-resource-hub')), count($resource_ids));
-                            ?>
-                        </span>
-                    <?php endif; ?>
-
-                    <?php if ($atts['show_description'] && has_excerpt($collection)) : ?>
-                        <div class="wprh-collection-description">
-                            <?php echo wp_kses_post(get_the_excerpt($collection)); ?>
-                        </div>
-                    <?php endif; ?>
-
-                    <?php if ($show_progress) : ?>
-                        <div class="wprh-collection-progress">
-                            <div class="wprh-progress-bar">
-                                <div class="wprh-progress-fill" style="width: 0%;"></div>
+                                <?php if (empty($resource_ids)) : ?>
+                                    <div class="wprh-collection-empty">
+                                        <?php esc_html_e('This collection has no resources yet.', 'wp-resource-hub'); ?>
+                                    </div>
+                                <?php else : ?>
+                                    <?php echo $this->render_resources($resource_ids, $display_style); ?>
+                                <?php endif; ?>
                             </div>
-                            <span class="wprh-progress-text">0 / <?php echo esc_html(count($resource_ids)); ?></span>
                         </div>
-                    <?php endif; ?>
-                </header>
-            <?php endif; ?>
-
-            <?php if (empty($resource_ids)) : ?>
-                <div class="wprh-collection-empty">
-                    <?php esc_html_e('This collection has no resources yet.', 'wp-resource-hub'); ?>
+                    </div>
                 </div>
-            <?php else : ?>
-                <?php echo $this->render_resources($resource_ids, $display_style); ?>
-            <?php endif; ?>
-        </div>
-    <?php
+            </div>
+        <?php
+        else :
+            // Standard layout for other display styles
+        ?>
+            <div class="wprh-collection wprh-collection-<?php echo esc_attr($display_style); ?> <?php echo esc_attr($atts['class']); ?>"
+                data-collection-id="<?php echo esc_attr($collection->ID); ?>">
+
+                <?php if ($atts['show_title'] || $atts['show_description'] || $atts['show_count']) : ?>
+                    <header class="wprh-collection-header">
+                        <?php if ($atts['show_title']) : ?>
+                            <h2 class="wprh-collection-title">
+                                <a href="<?php echo esc_url(get_permalink($collection)); ?>">
+                                    <?php echo esc_html(get_the_title($collection)); ?>
+                                </a>
+                            </h2>
+                        <?php endif; ?>
+
+                        <?php if ($atts['show_count']) : ?>
+                            <span class="wprh-collection-count">
+                                <?php
+                                /* translators: %d: Number of resources */
+                                printf(esc_html(_n('%d resource', '%d resources', count($resource_ids), 'wp-resource-hub')), count($resource_ids));
+                                ?>
+                            </span>
+                        <?php endif; ?>
+
+                        <?php if ($atts['show_description'] && has_excerpt($collection)) : ?>
+                            <div class="wprh-collection-description">
+                                <?php echo wp_kses_post(get_the_excerpt($collection)); ?>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if ($show_progress) : ?>
+                            <div class="wprh-collection-progress">
+                                <div class="wprh-progress-bar">
+                                    <div class="wprh-progress-fill" style="width: 0%;"></div>
+                                </div>
+                                <span class="wprh-progress-text">0 / <?php echo esc_html(count($resource_ids)); ?></span>
+                            </div>
+                        <?php endif; ?>
+                    </header>
+                <?php endif; ?>
+
+                <?php if (empty($resource_ids)) : ?>
+                    <div class="wprh-collection-empty">
+                        <?php esc_html_e('This collection has no resources yet.', 'wp-resource-hub'); ?>
+                    </div>
+                <?php else : ?>
+                    <?php echo $this->render_resources($resource_ids, $display_style); ?>
+                <?php endif; ?>
+            </div>
+        <?php
+        endif;
+
         return ob_get_clean();
     }
 
@@ -227,7 +276,7 @@ class CollectionShortcode
     private function render_resources($resource_ids, $layout)
     {
         ob_start();
-    ?>
+        ?>
         <div class="wprh-collection-resources wprh-layout-<?php echo esc_attr($layout); ?>">
             <?php
             $index = 0;
@@ -263,8 +312,101 @@ class CollectionShortcode
 
         ob_start();
 
-        if ('playlist' === $layout) :
+        if ('nested-accordion' === $layout) :
+            // Special handling for video resources
+            if ($type_slug === 'video') :
+                $video_provider = get_post_meta($resource->ID, '_wprh_video_provider', true);
+                $video_id = get_post_meta($resource->ID, '_wprh_video_id', true);
+                $embed_url = $video_id && $video_provider ? Helpers::get_video_embed_url($video_id, $video_provider) : '';
+                $duration = get_post_meta($resource->ID, '_wprh_video_duration', true);
         ?>
+                <div class="wprh-accordion-item wprh-accordion-video wprh-type-<?php echo esc_attr($type_slug); ?>"
+                    data-resource-id="<?php echo esc_attr($resource->ID); ?>">
+                    <button class="wprh-accordion-trigger" aria-expanded="false">
+                        <span class="wprh-accordion-number"><?php echo esc_html($index); ?></span>
+                        <span class="wprh-accordion-icon dashicons <?php echo esc_attr($type_icon); ?>"></span>
+                        <span class="wprh-accordion-title"><?php echo esc_html(get_the_title($resource)); ?></span>
+                        <?php if ($duration) : ?>
+                            <span class="wprh-accordion-duration"><?php echo esc_html($duration); ?></span>
+                        <?php endif; ?>
+                        <span class="wprh-accordion-arrow dashicons dashicons-arrow-down-alt2"></span>
+                    </button>
+                    <div class="wprh-accordion-content">
+                        <div class="wprh-accordion-inner wprh-accordion-video-inner">
+                            <?php if (has_excerpt($resource) || $resource->post_content) : ?>
+                                <div class="wprh-accordion-description">
+                                    <?php echo wp_kses_post(wpautop(get_the_excerpt($resource))); ?>
+                                </div>
+                            <?php endif; ?>
+
+                            <div class="wprh-accordion-video-container">
+                                <div class="wprh-accordion-video-thumbnail wprh-video-card"
+                                    data-video-url="<?php echo esc_attr($embed_url); ?>"
+                                    data-video-title="<?php echo esc_attr(get_the_title($resource)); ?>">
+                                    <?php
+                                    $thumbnail = Helpers::get_resource_thumbnail($resource, 'medium_large');
+                                    if (!empty($thumbnail)) : ?>
+                                        <?php echo $thumbnail; ?>
+                                    <?php else : ?>
+                                        <div class="wprh-video-default-overlay">
+                                            <img src="<?php echo esc_url(WPRH_PLUGIN_URL . 'assets/images/video-overlay.webp'); ?>" alt=""
+                                                class="wprh-overlay-bg">
+                                            <div class="wprh-overlay-gradient"></div>
+                                            <div class="wprh-overlay-title"><?php echo esc_html(get_the_title($resource)); ?></div>
+                                        </div>
+                                    <?php endif; ?>
+                                    <button class="wprh-play-button" aria-label="<?php esc_attr_e('Play video', 'wp-resource-hub'); ?>">
+                                        <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                            <circle cx="32" cy="32" r="32" fill="rgba(0,0,0,0.7)" />
+                                            <path d="M26 20L44 32L26 44V20Z" fill="white" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php
+            else : // Non-video resources
+            ?>
+                <div class="wprh-accordion-item wprh-type-<?php echo esc_attr($type_slug); ?>"
+                    data-resource-id="<?php echo esc_attr($resource->ID); ?>">
+                    <button class="wprh-accordion-trigger" aria-expanded="false">
+                        <span class="wprh-accordion-number"><?php echo esc_html($index); ?></span>
+                        <span class="wprh-accordion-icon dashicons <?php echo esc_attr($type_icon); ?>"></span>
+                        <span class="wprh-accordion-title"><?php echo esc_html(get_the_title($resource)); ?></span>
+                        <span class="wprh-accordion-arrow dashicons dashicons-arrow-down-alt2"></span>
+                    </button>
+                    <div class="wprh-accordion-content">
+                        <div class="wprh-accordion-inner">
+                            <?php if ($resource_type) : ?>
+                                <div class="wprh-accordion-meta">
+                                    <span class="wprh-accordion-type">
+                                        <strong><?php esc_html_e('Type:', 'wp-resource-hub'); ?></strong>
+                                        <?php echo esc_html($resource_type->name); ?>
+                                    </span>
+                                </div>
+                            <?php endif; ?>
+
+                            <?php if (has_excerpt($resource) || $resource->post_content) : ?>
+                                <div class="wprh-accordion-description">
+                                    <?php echo wp_kses_post(wpautop(get_the_excerpt($resource))); ?>
+                                </div>
+                            <?php endif; ?>
+
+                            <div class="wprh-accordion-actions">
+                                <a href="<?php echo esc_url(get_permalink($resource)); ?>" class="wprh-accordion-button">
+                                    <?php esc_html_e('View Resource', 'wp-resource-hub'); ?>
+                                    <span class="dashicons dashicons-arrow-right-alt2"></span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php
+            endif; // End video check
+        elseif ('playlist' === $layout) :
+            ?>
             <div class="wprh-playlist-item wprh-type-<?php echo esc_attr($type_slug); ?>"
                 data-resource-id="<?php echo esc_attr($resource->ID); ?>">
                 <span class="wprh-playlist-number"><?php echo esc_html($index); ?></span>

@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Single Resource Template.
  *
@@ -10,7 +11,7 @@
  */
 
 // Prevent direct access.
-if ( ! defined( 'ABSPATH' ) ) {
+if (! defined('ABSPATH')) {
     exit;
 }
 
@@ -21,16 +22,19 @@ get_header();
  *
  * @since 1.0.0
  */
-do_action( 'wprh_before_main_content' );
+do_action('wprh_before_main_content');
 ?>
 
 <div id="primary" class="content-area wprh-content-area">
     <main id="main" class="site-main wprh-site-main">
 
-        <?php while ( have_posts() ) : ?>
-            <?php the_post(); ?>
+        <?php while (have_posts()) : ?>
+            <?php
+            the_post();
+            global $post;
+            ?>
 
-            <article id="post-<?php the_ID(); ?>" <?php post_class( 'wprh-single-resource' ); ?>>
+            <article id="post-<?php the_ID(); ?>" <?php post_class('wprh-single-resource'); ?>>
 
                 <?php
                 /**
@@ -40,11 +44,11 @@ do_action( 'wprh_before_main_content' );
                  *
                  * @param WP_Post $post Current post object.
                  */
-                do_action( 'wprh_before_resource_header', $post );
+                do_action('wprh_before_resource_header', $post);
                 ?>
 
                 <header class="entry-header wprh-resource-header">
-                    <?php the_title( '<h1 class="entry-title wprh-resource-title">', '</h1>' ); ?>
+                    <?php the_title('<h1 class="entry-title wprh-resource-title">', '</h1>'); ?>
 
                     <?php
                     /**
@@ -54,7 +58,7 @@ do_action( 'wprh_before_main_content' );
                      *
                      * @param WP_Post $post Current post object.
                      */
-                    do_action( 'wprh_after_resource_title', $post );
+                    do_action('wprh_after_resource_title', $post);
                     ?>
 
                     <?php
@@ -65,13 +69,13 @@ do_action( 'wprh_before_main_content' );
                      *
                      * @param WP_Post $post Current post object.
                      */
-                    do_action( 'wprh_before_resource_content', $post );
+                    do_action('wprh_before_resource_content', $post);
                     ?>
                 </header>
 
-                <?php if ( has_post_thumbnail() ) : ?>
+                <?php if (has_post_thumbnail()) : ?>
                     <div class="wprh-resource-thumbnail">
-                        <?php the_post_thumbnail( 'large' ); ?>
+                        <?php the_post_thumbnail('large'); ?>
                     </div>
                 <?php endif; ?>
 
@@ -79,7 +83,7 @@ do_action( 'wprh_before_main_content' );
                     <?php
                     // Get the single renderer.
                     $renderer = \WPResourceHub\Frontend\SingleRenderer::get_instance();
-                    echo $renderer->render( $post ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+                    echo $renderer->render($post); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
                     ?>
                 </div>
 
@@ -92,28 +96,30 @@ do_action( 'wprh_before_main_content' );
                      *
                      * @param WP_Post $post Current post object.
                      */
-                    do_action( 'wprh_after_resource_content', $post );
+                    do_action('wprh_after_resource_content', $post);
                     ?>
 
                     <?php
                     // Display taxonomies.
-                    $topics = get_the_term_list( get_the_ID(), 'resource_topic', '', ', ', '' );
-                    $audiences = get_the_term_list( get_the_ID(), 'resource_audience', '', ', ', '' );
+                    $topics = get_the_term_list(get_the_ID(), 'resource_topic', '', ', ', '');
+                    $audiences = get_the_term_list(get_the_ID(), 'resource_audience', '', ', ', '');
 
-                    if ( $topics || $audiences ) :
-                        ?>
+                    if ($topics || $audiences) :
+                    ?>
                         <div class="wprh-resource-taxonomies">
-                            <?php if ( $topics ) : ?>
+                            <?php if ($topics) : ?>
                                 <div class="wprh-resource-topics">
-                                    <strong><?php esc_html_e( 'Topics:', 'wp-resource-hub' ); ?></strong>
-                                    <?php echo $topics; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                                    <strong><?php esc_html_e('Topics:', 'wp-resource-hub'); ?></strong>
+                                    <?php echo $topics; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped 
+                                    ?>
                                 </div>
                             <?php endif; ?>
 
-                            <?php if ( $audiences ) : ?>
+                            <?php if ($audiences) : ?>
                                 <div class="wprh-resource-audiences">
-                                    <strong><?php esc_html_e( 'Audience:', 'wp-resource-hub' ); ?></strong>
-                                    <?php echo $audiences; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+                                    <strong><?php esc_html_e('Audience:', 'wp-resource-hub'); ?></strong>
+                                    <?php echo $audiences; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped 
+                                    ?>
                                 </div>
                             <?php endif; ?>
                         </div>
@@ -130,7 +136,7 @@ do_action( 'wprh_before_main_content' );
              *
              * @param WP_Post $post Current post object.
              */
-            do_action( 'wprh_after_resource_article', $post );
+            do_action('wprh_after_resource_article', $post);
             ?>
 
         <?php endwhile; ?>
@@ -144,13 +150,13 @@ do_action( 'wprh_before_main_content' );
  *
  * @since 1.0.0
  */
-do_action( 'wprh_after_main_content' );
+do_action('wprh_after_main_content');
 
 /**
  * Fires to render the sidebar.
  *
  * @since 1.0.0
  */
-do_action( 'wprh_sidebar' );
+do_action('wprh_sidebar');
 
 get_footer();

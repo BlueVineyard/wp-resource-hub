@@ -59,7 +59,7 @@ class AccessManager {
      * @since 1.1.0
      */
     private function __construct() {
-        $this->set_access_levels();
+        add_action( 'init', array( $this, 'init_access_levels' ), 0 );
 
         // Admin hooks.
         add_action( 'add_meta_boxes', array( $this, 'register_meta_box' ) );
@@ -73,6 +73,17 @@ class AccessManager {
         // Add column to list table.
         add_filter( 'manage_resource_posts_columns', array( $this, 'add_access_column' ), 15 );
         add_action( 'manage_resource_posts_custom_column', array( $this, 'render_access_column' ), 10, 2 );
+    }
+
+    /**
+     * Initialize access levels on init to avoid early translation loading.
+     *
+     * @since 1.1.0
+     *
+     * @return void
+     */
+    public function init_access_levels() {
+        $this->set_access_levels();
     }
 
     /**

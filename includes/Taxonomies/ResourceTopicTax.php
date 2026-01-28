@@ -65,8 +65,19 @@ class ResourceTopicTax {
      * @since 1.0.0
      */
     private function __construct() {
-        $this->set_default_topics();
+        add_action( 'init', array( $this, 'init_default_topics' ), 0 );
         add_action( 'wprh_activated', array( $this, 'create_default_terms' ) );
+    }
+
+    /**
+     * Initialize default topics on init to avoid early translation loading.
+     *
+     * @since 1.0.0
+     *
+     * @return void
+     */
+    public function init_default_topics() {
+        $this->set_default_topics();
     }
 
     /**

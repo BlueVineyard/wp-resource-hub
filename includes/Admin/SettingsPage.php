@@ -97,7 +97,7 @@ class SettingsPage
     {
         // Register settings.
         register_setting(
-            self::OPTION_GROUP,
+            'wprh_settings_general',
             'wprh_general_settings',
             array(
                 'type'              => 'array',
@@ -107,7 +107,7 @@ class SettingsPage
         );
 
         register_setting(
-            self::OPTION_GROUP,
+            'wprh_settings_frontend',
             'wprh_frontend_settings',
             array(
                 'type'              => 'array',
@@ -141,6 +141,14 @@ class SettingsPage
             'wprh_general_section'
         );
 
+        add_settings_field(
+            'enable_accordions',
+            __('Accordion Builder', 'wp-resource-hub'),
+            array($this, 'render_enable_accordions_field'),
+            'wprh-settings-general',
+            'wprh_general_section'
+        );
+
         // Frontend settings section.
         add_settings_section(
             'wprh_frontend_section',
@@ -168,7 +176,7 @@ class SettingsPage
 
         add_settings_field(
             'enable_filters',
-            __('Enable Filters', 'wp-resource-hub'),
+            __('Toolbar Filters &amp; Order', 'wp-resource-hub'),
             array($this, 'render_enable_filters_field'),
             'wprh-settings-frontend',
             'wprh_frontend_section'
@@ -178,6 +186,14 @@ class SettingsPage
             'internal_content_defaults',
             __('Internal Content Defaults', 'wp-resource-hub'),
             array($this, 'render_internal_content_defaults_field'),
+            'wprh-settings-frontend',
+            'wprh_frontend_section'
+        );
+
+        add_settings_field(
+            'video_lightbox_only',
+            __('Video Display Mode', 'wp-resource-hub'),
+            array($this, 'render_video_lightbox_field'),
             'wprh-settings-frontend',
             'wprh_frontend_section'
         );
@@ -195,6 +211,7 @@ class SettingsPage
         return array(
             'default_resource_type' => '',
             'default_ordering'      => 'date',
+            'enable_accordions'     => false,
         );
     }
 
@@ -210,12 +227,18 @@ class SettingsPage
         return array(
             'items_per_page'          => 12,
             'default_layout'          => 'grid',
+            'enable_search'           => true,
             'enable_type_filter'      => true,
             'enable_topic_filter'     => true,
             'enable_audience_filter'  => true,
+            'enable_duration_filter'  => true,
+            'enable_sort_filter'      => true,
+            'enable_layout_toggle'    => true,
+            'filter_order'            => array('search', 'type', 'topic', 'audience', 'duration', 'sort', 'layout_toggle'),
             'default_show_toc'        => false,
             'default_show_reading_time' => true,
             'default_show_related'    => true,
+            'video_lightbox_only'     => true,
         );
     }
 
@@ -239,6 +262,8 @@ class SettingsPage
         $sanitized['default_ordering'] = isset($input['default_ordering']) && in_array($input['default_ordering'], $valid_orderings, true)
             ? $input['default_ordering']
             : 'date';
+
+        $sanitized['enable_accordions'] = ! empty($input['enable_accordions']);
 
         /**
          * Filter the sanitized general settings.
@@ -273,12 +298,34 @@ class SettingsPage
             : 'grid';
 
         // Boolean fields.
+        $sanitized['enable_search']           = ! empty($input['enable_search']);
         $sanitized['enable_type_filter']      = ! empty($input['enable_type_filter']);
         $sanitized['enable_topic_filter']     = ! empty($input['enable_topic_filter']);
         $sanitized['enable_audience_filter']  = ! empty($input['enable_audience_filter']);
+        $sanitized['enable_duration_filter']  = ! empty($input['enable_duration_filter']);
+        $sanitized['enable_sort_filter']      = ! empty($input['enable_sort_filter']);
+        $sanitized['enable_layout_toggle']    = ! empty($input['enable_layout_toggle']);
+
+        // Filter order.
+        $valid_filter_keys = array('search', 'type', 'topic', 'audience', 'duration', 'sort', 'layout_toggle');
+        $defaults = $this->get_frontend_defaults();
+        if (! empty($input['filter_order']) && is_array($input['filter_order'])) {
+            $order = array_values(array_intersect($input['filter_order'], $valid_filter_keys));
+            // Append any missing keys.
+            foreach ($valid_filter_keys as $key) {
+                if (! in_array($key, $order, true)) {
+                    $order[] = $key;
+                }
+            }
+            $sanitized['filter_order'] = $order;
+        } else {
+            $sanitized['filter_order'] = $defaults['filter_order'];
+        }
+
         $sanitized['default_show_toc']        = ! empty($input['default_show_toc']);
         $sanitized['default_show_reading_time'] = ! empty($input['default_show_reading_time']);
         $sanitized['default_show_related']    = ! empty($input['default_show_related']);
+        $sanitized['video_lightbox_only']     = ! empty($input['video_lightbox_only']);
 
         /**
          * Filter the sanitized frontend settings.
@@ -309,6 +356,7 @@ class SettingsPage
         $tabs = array(
             'general'     => __('General', 'wp-resource-hub'),
             'frontend'    => __('Frontend', 'wp-resource-hub'),
+            'shortcodes'  => __('Shortcodes', 'wp-resource-hub'),
             'walkthrough' => __('Walkthrough', 'wp-resource-hub'),
         );
 
@@ -335,18 +383,20 @@ class SettingsPage
 
             <?php if ($active_tab === 'walkthrough') : ?>
                 <?php $this->render_walkthrough_content(); ?>
+            <?php elseif ($active_tab === 'shortcodes') : ?>
+                <?php $this->render_shortcodes_content(); ?>
             <?php else : ?>
                 <form method="post" action="options.php">
                     <?php
-                    settings_fields(self::OPTION_GROUP);
-
                     switch ($active_tab) {
                         case 'frontend':
+                            settings_fields('wprh_settings_frontend');
                             do_settings_sections('wprh-settings-frontend');
                             break;
 
                         case 'general':
                         default:
+                            settings_fields('wprh_settings_general');
                             do_settings_sections('wprh-settings-general');
                             break;
                     }
@@ -458,6 +508,28 @@ class SettingsPage
     }
 
     /**
+     * Render enable accordions field.
+     *
+     * @since 1.3.0
+     *
+     * @return void
+     */
+    public function render_enable_accordions_field()
+    {
+        $settings = get_option('wprh_general_settings', $this->get_general_defaults());
+    ?>
+        <label>
+            <input type="checkbox" name="wprh_general_settings[enable_accordions]" value="1"
+                <?php checked(! empty($settings['enable_accordions'])); ?>>
+            <?php esc_html_e('Enable the Accordion Builder post type and shortcode', 'wp-resource-hub'); ?>
+        </label>
+        <p class="description">
+            <?php esc_html_e('When enabled, adds the Accordions post type under Resources, allowing you to build custom nested accordion structures. Use the [wprh_accordion id="123"] shortcode to display them.', 'wp-resource-hub'); ?>
+        </p>
+    <?php
+    }
+
+    /**
      * Render items per page field.
      *
      * @since 1.0.0
@@ -510,28 +582,150 @@ class SettingsPage
      */
     public function render_enable_filters_field()
     {
-        $settings = get_option('wprh_frontend_settings', $this->get_frontend_defaults());
+        $defaults = $this->get_frontend_defaults();
+        $settings = get_option('wprh_frontend_settings', $defaults);
+
+        $filter_items = array(
+            'search'        => array(
+                'label'   => __('Search', 'wp-resource-hub'),
+                'setting' => 'enable_search',
+                'icon'    => 'dashicons-search',
+            ),
+            'type'          => array(
+                'label'   => __('Resource Type filter', 'wp-resource-hub'),
+                'setting' => 'enable_type_filter',
+                'icon'    => 'dashicons-tag',
+            ),
+            'topic'         => array(
+                'label'   => __('Topic filter', 'wp-resource-hub'),
+                'setting' => 'enable_topic_filter',
+                'icon'    => 'dashicons-category',
+            ),
+            'audience'      => array(
+                'label'   => __('Audience filter', 'wp-resource-hub'),
+                'setting' => 'enable_audience_filter',
+                'icon'    => 'dashicons-groups',
+            ),
+            'duration'      => array(
+                'label'   => __('Duration filter (for videos)', 'wp-resource-hub'),
+                'setting' => 'enable_duration_filter',
+                'icon'    => 'dashicons-clock',
+            ),
+            'sort'          => array(
+                'label'   => __('Sort By filter', 'wp-resource-hub'),
+                'setting' => 'enable_sort_filter',
+                'icon'    => 'dashicons-sort',
+            ),
+            'layout_toggle' => array(
+                'label'   => __('Grid / List view toggle', 'wp-resource-hub'),
+                'setting' => 'enable_layout_toggle',
+                'icon'    => 'dashicons-grid-view',
+            ),
+        );
+
+        $order = isset($settings['filter_order']) && is_array($settings['filter_order'])
+            ? $settings['filter_order']
+            : $defaults['filter_order'];
+
+        // Ensure all keys are present.
+        foreach (array_keys($filter_items) as $key) {
+            if (! in_array($key, $order, true)) {
+                $order[] = $key;
+            }
+        }
+
+        wp_enqueue_script('jquery-ui-sortable');
     ?>
-        <fieldset>
-            <label>
-                <input type="checkbox" name="wprh_frontend_settings[enable_type_filter]" value="1"
-                    <?php checked(! empty($settings['enable_type_filter'])); ?>>
-                <?php esc_html_e('Resource Type filter', 'wp-resource-hub'); ?>
-            </label>
-            <br>
-            <label>
-                <input type="checkbox" name="wprh_frontend_settings[enable_topic_filter]" value="1"
-                    <?php checked(! empty($settings['enable_topic_filter'])); ?>>
-                <?php esc_html_e('Topic filter', 'wp-resource-hub'); ?>
-            </label>
-            <br>
-            <label>
-                <input type="checkbox" name="wprh_frontend_settings[enable_audience_filter]" value="1"
-                    <?php checked(! empty($settings['enable_audience_filter'])); ?>>
-                <?php esc_html_e('Audience filter', 'wp-resource-hub'); ?>
-            </label>
-        </fieldset>
-        <p class="description"><?php esc_html_e('Enable filtering options on archive pages.', 'wp-resource-hub'); ?></p>
+        <style>
+            .wprh-filter-order-list {
+                margin: 0;
+                padding: 0;
+                list-style: none;
+                max-width: 400px;
+            }
+            .wprh-filter-order-item {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                padding: 8px 12px;
+                margin-bottom: 4px;
+                background: #fff;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+                cursor: move;
+                transition: border-color 0.2s, box-shadow 0.2s;
+            }
+            .wprh-filter-order-item:hover {
+                border-color: #2271b1;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            }
+            .wprh-filter-order-item.ui-sortable-helper {
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                border-color: #2271b1;
+            }
+            .wprh-filter-order-item.ui-sortable-placeholder {
+                visibility: visible !important;
+                background: #f0f6fc;
+                border: 2px dashed #2271b1;
+            }
+            .wprh-filter-order-item .dashicons.wprh-drag-handle {
+                color: #c3c4c7;
+                font-size: 16px;
+                width: 16px;
+                height: 16px;
+                flex-shrink: 0;
+            }
+            .wprh-filter-order-item:hover .dashicons.wprh-drag-handle {
+                color: #646970;
+            }
+            .wprh-filter-order-item .dashicons.wprh-filter-icon {
+                color: #646970;
+                font-size: 16px;
+                width: 16px;
+                height: 16px;
+                flex-shrink: 0;
+            }
+            .wprh-filter-order-item label {
+                flex: 1;
+                cursor: pointer;
+                font-size: 13px;
+            }
+            .wprh-filter-order-item input[type="checkbox"] {
+                margin: 0;
+            }
+        </style>
+
+        <ul class="wprh-filter-order-list" id="wprh-filter-order-list">
+            <?php foreach ($order as $key) :
+                if (! isset($filter_items[$key])) continue;
+                $item = $filter_items[$key];
+                $setting_key = $item['setting'];
+                $is_enabled = isset($settings[$setting_key]) ? ! empty($settings[$setting_key]) : true;
+                $field_name = 'wprh_frontend_settings[' . $setting_key . ']';
+            ?>
+                <li class="wprh-filter-order-item" data-key="<?php echo esc_attr($key); ?>">
+                    <span class="dashicons dashicons-menu wprh-drag-handle"></span>
+                    <span class="dashicons <?php echo esc_attr($item['icon']); ?> wprh-filter-icon"></span>
+                    <input type="checkbox" name="<?php echo esc_attr($field_name); ?>" value="1"
+                        <?php checked($is_enabled); ?>>
+                    <label><?php echo esc_html($item['label']); ?></label>
+                    <input type="hidden" name="wprh_frontend_settings[filter_order][]" value="<?php echo esc_attr($key); ?>">
+                </li>
+            <?php endforeach; ?>
+        </ul>
+        <p class="description"><?php esc_html_e('Drag to reorder. Check to enable. This controls the toolbar order on archive pages.', 'wp-resource-hub'); ?></p>
+
+        <script>
+            jQuery(document).ready(function($) {
+                $('#wprh-filter-order-list').sortable({
+                    handle: '.wprh-drag-handle',
+                    placeholder: 'wprh-filter-order-item ui-sortable-placeholder',
+                    forcePlaceholderSize: true,
+                    cursor: 'move',
+                    opacity: 0.9
+                });
+            });
+        </script>
     <?php
     }
 
@@ -567,6 +761,295 @@ class SettingsPage
         </fieldset>
         <p class="description">
             <?php esc_html_e('Default display options for Internal Content type resources.', 'wp-resource-hub'); ?></p>
+    <?php
+    }
+
+    /**
+     * Render shortcodes reference content.
+     *
+     * @since 1.3.0
+     *
+     * @return void
+     */
+    public function render_shortcodes_content()
+    {
+        $accordions_enabled = \WPResourceHub\Plugin::is_accordions_enabled();
+    ?>
+        <style>
+            .wprh-shortcodes-ref {
+                max-width: 900px;
+                margin: 20px 0;
+            }
+            .wprh-shortcode-card {
+                background: #fff;
+                border: 1px solid #c3c4c7;
+                border-radius: 4px;
+                padding: 20px;
+                margin-bottom: 20px;
+            }
+            .wprh-shortcode-card h3 {
+                margin-top: 0;
+                font-size: 16px;
+                color: #1d2327;
+            }
+            .wprh-shortcode-card .wprh-shortcode-tag {
+                display: inline-block;
+                background: #f0f0f1;
+                border: 1px solid #c3c4c7;
+                padding: 6px 12px;
+                border-radius: 3px;
+                font-family: Consolas, Monaco, monospace;
+                font-size: 13px;
+                margin: 8px 0 12px;
+                user-select: all;
+            }
+            .wprh-shortcode-card table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 12px;
+            }
+            .wprh-shortcode-card th,
+            .wprh-shortcode-card td {
+                text-align: left;
+                padding: 8px 12px;
+                border-bottom: 1px solid #f0f0f1;
+                font-size: 13px;
+            }
+            .wprh-shortcode-card th {
+                background: #f6f7f7;
+                font-weight: 600;
+            }
+            .wprh-shortcode-card code {
+                background: #f6f7f7;
+                padding: 2px 6px;
+                border-radius: 3px;
+                font-family: Consolas, Monaco, monospace;
+                font-size: 12px;
+            }
+            .wprh-shortcode-disabled {
+                opacity: 0.6;
+            }
+            .wprh-shortcode-disabled .wprh-shortcode-badge {
+                display: inline-block;
+                background: #d63638;
+                color: #fff;
+                font-size: 11px;
+                padding: 2px 8px;
+                border-radius: 3px;
+                margin-left: 8px;
+                vertical-align: middle;
+            }
+        </style>
+
+        <div class="wprh-shortcodes-ref">
+            <h2><?php esc_html_e('Available Shortcodes', 'wp-resource-hub'); ?></h2>
+            <p><?php esc_html_e('Copy and paste these shortcodes into any page, post, or widget to display your resources.', 'wp-resource-hub'); ?></p>
+
+            <!-- Resources Grid -->
+            <div class="wprh-shortcode-card">
+                <h3><?php esc_html_e('Resources Grid / List', 'wp-resource-hub'); ?></h3>
+                <p><?php esc_html_e('Displays a filterable grid or list of resources.', 'wp-resource-hub'); ?></p>
+                <div class="wprh-shortcode-tag">[resources]</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th><?php esc_html_e('Attribute', 'wp-resource-hub'); ?></th>
+                            <th><?php esc_html_e('Description', 'wp-resource-hub'); ?></th>
+                            <th><?php esc_html_e('Default', 'wp-resource-hub'); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>type</code></td>
+                            <td><?php esc_html_e('Filter by resource type slug (e.g., video, pdf, download)', 'wp-resource-hub'); ?></td>
+                            <td><em><?php esc_html_e('All types', 'wp-resource-hub'); ?></em></td>
+                        </tr>
+                        <tr>
+                            <td><code>topic</code></td>
+                            <td><?php esc_html_e('Filter by topic slug', 'wp-resource-hub'); ?></td>
+                            <td><em><?php esc_html_e('All topics', 'wp-resource-hub'); ?></em></td>
+                        </tr>
+                        <tr>
+                            <td><code>audience</code></td>
+                            <td><?php esc_html_e('Filter by audience slug', 'wp-resource-hub'); ?></td>
+                            <td><em><?php esc_html_e('All audiences', 'wp-resource-hub'); ?></em></td>
+                        </tr>
+                        <tr>
+                            <td><code>layout</code></td>
+                            <td><?php esc_html_e('Display layout: grid or list', 'wp-resource-hub'); ?></td>
+                            <td><code>grid</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>per_page</code></td>
+                            <td><?php esc_html_e('Number of resources per page', 'wp-resource-hub'); ?></td>
+                            <td><code>12</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>orderby</code></td>
+                            <td><?php esc_html_e('Sort by: date, title, modified, menu_order', 'wp-resource-hub'); ?></td>
+                            <td><code>date</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>order</code></td>
+                            <td><?php esc_html_e('Sort direction: ASC or DESC', 'wp-resource-hub'); ?></td>
+                            <td><code>DESC</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>show_filters</code></td>
+                            <td><?php esc_html_e('Show filter bar: true or false', 'wp-resource-hub'); ?></td>
+                            <td><code>true</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>class</code></td>
+                            <td><?php esc_html_e('Additional CSS class', 'wp-resource-hub'); ?></td>
+                            <td><em><?php esc_html_e('None', 'wp-resource-hub'); ?></em></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p><strong><?php esc_html_e('Examples:', 'wp-resource-hub'); ?></strong></p>
+                <div class="wprh-shortcode-tag">[resources type="video" layout="list" per_page="6"]</div>
+                <div class="wprh-shortcode-tag">[resources topic="marketing" audience="beginners"]</div>
+            </div>
+
+            <!-- Single Resource -->
+            <div class="wprh-shortcode-card">
+                <h3><?php esc_html_e('Single Resource', 'wp-resource-hub'); ?></h3>
+                <p><?php esc_html_e('Embeds a single resource inline.', 'wp-resource-hub'); ?></p>
+                <div class="wprh-shortcode-tag">[resource id="123"]</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th><?php esc_html_e('Attribute', 'wp-resource-hub'); ?></th>
+                            <th><?php esc_html_e('Description', 'wp-resource-hub'); ?></th>
+                            <th><?php esc_html_e('Default', 'wp-resource-hub'); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>id</code></td>
+                            <td><?php esc_html_e('Resource post ID (required)', 'wp-resource-hub'); ?></td>
+                            <td>&mdash;</td>
+                        </tr>
+                        <tr>
+                            <td><code>class</code></td>
+                            <td><?php esc_html_e('Additional CSS class', 'wp-resource-hub'); ?></td>
+                            <td><em><?php esc_html_e('None', 'wp-resource-hub'); ?></em></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Collection -->
+            <div class="wprh-shortcode-card">
+                <h3><?php esc_html_e('Collection', 'wp-resource-hub'); ?></h3>
+                <p><?php esc_html_e('Displays a resource collection with its chosen layout style.', 'wp-resource-hub'); ?></p>
+                <div class="wprh-shortcode-tag">[resource_collection id="456"]</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th><?php esc_html_e('Attribute', 'wp-resource-hub'); ?></th>
+                            <th><?php esc_html_e('Description', 'wp-resource-hub'); ?></th>
+                            <th><?php esc_html_e('Default', 'wp-resource-hub'); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>id</code></td>
+                            <td><?php esc_html_e('Collection post ID', 'wp-resource-hub'); ?></td>
+                            <td>&mdash;</td>
+                        </tr>
+                        <tr>
+                            <td><code>slug</code></td>
+                            <td><?php esc_html_e('Collection slug (alternative to ID)', 'wp-resource-hub'); ?></td>
+                            <td><em><?php esc_html_e('None', 'wp-resource-hub'); ?></em></td>
+                        </tr>
+                        <tr>
+                            <td><code>layout</code></td>
+                            <td><?php esc_html_e('Override layout: list, grid, playlist, nested-accordion', 'wp-resource-hub'); ?></td>
+                            <td><em><?php esc_html_e('Collection setting', 'wp-resource-hub'); ?></em></td>
+                        </tr>
+                        <tr>
+                            <td><code>show_title</code></td>
+                            <td><?php esc_html_e('Show collection title: true or false', 'wp-resource-hub'); ?></td>
+                            <td><code>true</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>show_description</code></td>
+                            <td><?php esc_html_e('Show collection description: true or false', 'wp-resource-hub'); ?></td>
+                            <td><code>true</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>show_count</code></td>
+                            <td><?php esc_html_e('Show resource count: true or false', 'wp-resource-hub'); ?></td>
+                            <td><code>true</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>show_progress</code></td>
+                            <td><?php esc_html_e('Show progress bar: true or false', 'wp-resource-hub'); ?></td>
+                            <td><em><?php esc_html_e('Collection setting', 'wp-resource-hub'); ?></em></td>
+                        </tr>
+                        <tr>
+                            <td><code>class</code></td>
+                            <td><?php esc_html_e('Additional CSS class', 'wp-resource-hub'); ?></td>
+                            <td><em><?php esc_html_e('None', 'wp-resource-hub'); ?></em></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p><strong><?php esc_html_e('Examples:', 'wp-resource-hub'); ?></strong></p>
+                <div class="wprh-shortcode-tag">[resource_collection id="456" layout="nested-accordion"]</div>
+                <div class="wprh-shortcode-tag">[resource_collection slug="getting-started" show_progress="true"]</div>
+            </div>
+
+            <!-- Accordion -->
+            <div class="wprh-shortcode-card <?php echo ! $accordions_enabled ? 'wprh-shortcode-disabled' : ''; ?>">
+                <h3>
+                    <?php esc_html_e('Accordion Builder', 'wp-resource-hub'); ?>
+                    <?php if (! $accordions_enabled) : ?>
+                        <span class="wprh-shortcode-badge"><?php esc_html_e('Disabled', 'wp-resource-hub'); ?></span>
+                    <?php endif; ?>
+                </h3>
+                <p><?php esc_html_e('Displays a custom-built accordion structure with nested sections and resources.', 'wp-resource-hub'); ?></p>
+                <?php if (! $accordions_enabled) : ?>
+                    <p><em><?php esc_html_e('Enable the Accordion Builder in the General tab to use this shortcode.', 'wp-resource-hub'); ?></em></p>
+                <?php endif; ?>
+                <div class="wprh-shortcode-tag">[wprh_accordion id="789"]</div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th><?php esc_html_e('Attribute', 'wp-resource-hub'); ?></th>
+                            <th><?php esc_html_e('Description', 'wp-resource-hub'); ?></th>
+                            <th><?php esc_html_e('Default', 'wp-resource-hub'); ?></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>id</code></td>
+                            <td><?php esc_html_e('Accordion post ID (required)', 'wp-resource-hub'); ?></td>
+                            <td>&mdash;</td>
+                        </tr>
+                        <tr>
+                            <td><code>class</code></td>
+                            <td><?php esc_html_e('Additional CSS class', 'wp-resource-hub'); ?></td>
+                            <td><em><?php esc_html_e('None', 'wp-resource-hub'); ?></em></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <?php
+            /**
+             * Fires after shortcode reference cards are rendered.
+             *
+             * @since 1.3.0
+             */
+            do_action('wprh_shortcodes_reference');
+            ?>
+
+            <div style="background: #f0f6fc; border-left: 4px solid #2271b1; padding: 15px; margin: 15px 0;">
+                <strong><?php esc_html_e('Finding Post IDs', 'wp-resource-hub'); ?></strong><br>
+                <?php esc_html_e('To find a resource, collection, or accordion ID: edit the item and look at the number in the browser URL bar after "post=". For example, in "post.php?post=123&action=edit", the ID is 123.', 'wp-resource-hub'); ?>
+            </div>
+        </div>
     <?php
     }
 
@@ -994,6 +1477,28 @@ class SettingsPage
                 to learn is by doing. Have fun building your resource library! 🚀
             </div>
         </div>
+    <?php
+    }
+
+    /**
+     * Render video lightbox field.
+     *
+     * @since 1.0.0
+     *
+     * @return void
+     */
+    public function render_video_lightbox_field()
+    {
+        $settings = get_option('wprh_frontend_settings', $this->get_frontend_defaults());
+    ?>
+        <label>
+            <input type="checkbox" name="wprh_frontend_settings[video_lightbox_only]" value="1"
+                <?php checked(! empty($settings['video_lightbox_only'])); ?>>
+            <?php esc_html_e('Open videos in lightbox player (no single page)', 'wp-resource-hub'); ?>
+        </label>
+        <p class="description">
+            <?php esc_html_e('When enabled, clicking on video cards opens a lightbox player instead of going to the single resource page. Recommended for video-focused sites.', 'wp-resource-hub'); ?>
+        </p>
 <?php
     }
 

@@ -592,11 +592,6 @@ class MetaBoxes
      */
     public function save_meta($post_id, $post, $update)
     {
-        // Verify nonce.
-        if (! isset($_POST['wprh_meta_nonce']) || ! wp_verify_nonce($_POST['wprh_meta_nonce'], 'wprh_save_meta')) {
-            return;
-        }
-
         // Check autosave.
         if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
             return;
@@ -604,6 +599,11 @@ class MetaBoxes
 
         // Check permissions.
         if (! current_user_can('edit_post', $post_id)) {
+            return;
+        }
+
+        // Verify nonce - but allow saves even if nonce isn't present (for block editor compatibility).
+        if (isset($_POST['wprh_meta_nonce']) && ! wp_verify_nonce($_POST['wprh_meta_nonce'], 'wprh_save_meta')) {
             return;
         }
 

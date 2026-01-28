@@ -1,0 +1,264 @@
+# WP Resource Hub - Project Intelligence
+
+## Project Overview
+
+This is a mature, production-ready WordPress plugin (v1.0.0) that provides a comprehensive resource management system. The codebase is well-structured, secure, and follows WordPress best practices consistently.
+
+## Critical Implementation Paths
+
+### Adding a New Resource Type
+
+1. Modify `ResourceTypeTax::set_default_types()` to add new type definition
+2. Add type-specific meta fields in `MetaBoxes.php`:
+   - Add render method (e.g., `render_audio_fields()`)
+   - Add save method (e.g., `save_audio_meta()`)
+   - Update `render_details_meta_box()` to show new fields
+3. Add type-specific rendering in `SingleRenderer.php`:
+   - Add render method (e.g., `render_audio()`)
+   - Update `render()` switch statement
+4. Update frontend CSS for new type styling
+5. Test across all display methods (single, shortcodes, blocks)
+
+### Modifying Data Structure
+
+- ALWAYS update version number in wp-resource-hub.php
+- Consider migration script if changing existing meta fields
+- Test import/export thoroughly after changes
+- Update SettingsPage defaults if adding new options
+
+### Security Checklist for Any Change
+
+- Verify nonce on all form submissions
+- Check capabilities before admin operations
+- Sanitize ALL inputs (sanitize_text_field, sanitize_url, etc.)
+- Escape ALL outputs (esc_html, esc_attr, esc_url)
+- Use $wpdb->prepare() for any custom queries
+- Never expose file paths directly
+
+## Important Patterns
+
+### Meta Field Naming Convention
+
+All plugin meta fields use `_wprh_` prefix (underscore prefix makes them hidden in custom fields UI).
+Example: `_wprh_video_url`, `_wprh_access_level`
+
+### Hook Naming Convention
+
+Actions: `wprh_{verb}` - e.g., `wprh_activated`, `wprh_loaded`
+Filters: `wprh_{context}` - e.g., `wprh_post_type_args`, `wprh_template_path`
+
+### Class Organization
+
+- All classes use singleton pattern via `get_instance()`
+- Constructor is always private
+- Initialization happens in constructor
+- Public methods are minimal and purposeful
+
+### Admin Asset Loading
+
+Assets only load on relevant pages using hook suffixes:
+
+```php
+if ($hook !== 'post.php' && $hook !== 'post-new.php') return;
+```
+
+## Known Gotchas
+
+### Statistics Table Creation
+
+The stats table is created on activation, not on plugin load. If a site skips activation (manual file copy), table won't exist and stats will fail silently. Always verify table exists if debugging stats issues.
+
+### Download URLs
+
+Download URLs use custom rewrite rules: `/resource-download/{id}`
+If downloads don't work, flush rewrite rules: Settings > Permalinks > Save
+
+### Access Control vs. WordPress Capabilities
+
+The plugin has its own access control system separate from WordPress roles/capabilities. Don't confuse `AccessManager::can_access()` with WordPress's `current_user_can()`.
+
+### Type vs. Taxonomy
+
+"Resource Type" is both a taxonomy term AND a meta field concept. The taxonomy stores the type assignment, but type-specific meta fields are stored as post meta, not term meta.
+
+### Collection Resources Order
+
+Collection resources are stored as a serialized array of IDs in post meta. Order matters and is preserved through drag-drop in admin. Never use get_posts() to fetch collection resources - always use the stored order.
+
+## Performance Notes
+
+### Statistics Queries Can Be Expensive
+
+The stats table can grow large. Consider:
+
+- Adding indexes if querying by new fields
+- Implementing cleanup for old stats
+- Using transients for summary calculations
+- Limiting stats retention period (future enhancement)
+
+### Avoid Querying in Loops
+
+When displaying collections or resource grids, fetch all needed data before the loop. Don't query post meta inside foreach loops.
+
+### Template Loading Is Cached
+
+WordPress caches `locate_template()` results. During development, you may need to clear object cache when changing template files.
+
+## Development Workflow
+
+### Testing New Features
+
+1. Test with all 5 resource types
+2. Test in both block editor and classic editor
+3. Verify in different layouts (grid/list)
+4. Check access control restrictions
+5. Verify statistics tracking
+6. Test import/export with new data
+7. Check template overrides still work
+
+### Before Committing
+
+- Remove debug code and error_log() calls
+- Verify no PHP warnings/notices
+- Check JavaScript console for errors
+- Test with WordPress debug mode enabled
+- Verify all strings are translatable
+- Update version number if needed
+
+## Common Tasks
+
+### Adding a New Setting
+
+1. Add field to SettingsPage::register_settings()
+2. Add render method for the field
+3. Add to defaults array
+4. Add sanitization in sanitize callback
+5. Use SettingsPage::get_setting() to retrieve
+
+### Adding a Bulk Action
+
+1. Add action to BulkActions::register_bulk_actions()
+2. Add handler in BulkActions::handle_bulk_actions()
+3. Add AJAX handler if needed for modal
+4. Update notices in bulk_action_notices()
+
+### Adding a Shortcode Attribute
+
+1. Add to get_defaults() method
+2. Use in render() method
+3. Update attribute parsing
+4. Document in code comments
+
+## Dependencies
+
+### External Services
+
+- YouTube API (for video embeds, no key required)
+- Vimeo API (for video embeds, no key required)
+- NOTE: Thumbnails for Vimeo not implemented (would require API key)
+
+### WordPress Features Used
+
+- Custom Post Types
+- Taxonomies
+- Meta Box API
+- Settings API
+- Rewrite API
+- REST API
+- Block Editor
+- Template System
+
+### NOT Used (Important to Know)
+
+- No npm build process (vanilla JS)
+- No Composer dependencies
+- No external PHP libraries
+- No jQuery dependencies (mostly vanilla JS)
+- No React/Vue (blocks use server-side rendering)
+
+## Future Considerations
+
+### If Adding User-Facing Features
+
+Consider GDPR implications, especially:
+
+- IP address storage in statistics
+- User tracking cookies
+- Data export requirements
+- Privacy policy disclosures
+
+### If Scaling for Large Sites
+
+Watch for:
+
+- Stats table size (add cleanup/archival)
+- Post meta queries (add caching)
+- Collection resource counts (limit or paginate)
+- File download bandwidth (consider CDN)
+
+### If Extending for Developers
+
+Provide:
+
+- Clear filter documentation
+- Example code snippets
+- Custom type registration helper
+- REST API documentation
+- Webhook support
+
+## Project-Specific Preferences
+
+### Code Style
+
+- Tabs for indentation (WordPress standard)
+- Yoda conditions for comparisons
+- Spaces around operators
+- Opening brace on same line
+- DocBlocks for all methods
+
+### File Organization
+
+- One class per file
+- File name matches class name
+- Logical grouping by feature
+- Keep related files together
+
+### Documentation Style
+
+- Use `@since 1.0.0` tags
+- Document parameters and return types
+- Explain "why" not just "what"
+- Add examples for complex methods
+
+## Support Paths
+
+### User Reports Bug
+
+1. Check WordPress/PHP version compatibility
+2. Verify plugin is latest version
+3. Check for JavaScript errors in console
+4. Enable WordPress debug mode
+5. Check for plugin conflicts (disable others)
+6. Review error logs
+7. Check database table exists (stats)
+
+### User Requests Feature
+
+1. Check if already possible via hooks
+2. Consider if fits plugin scope
+3. Evaluate complexity vs. benefit
+4. Check for breaking changes
+5. Plan for backward compatibility
+
+## Memory Bank Usage
+
+This project has comprehensive Memory Bank documentation:
+
+- **projectbrief.md**: Requirements and goals
+- **productContext.md**: User experience and problems solved
+- **systemPatterns.md**: Architecture and design patterns
+- **techContext.md**: Technical implementation details
+- **activeContext.md**: Current state and decisions
+- **progress.md**: Feature status and roadmap
+
+After any major change or when context is needed, review the Memory Bank files to maintain consistency with the project's established patterns and goals.
