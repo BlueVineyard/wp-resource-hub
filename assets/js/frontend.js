@@ -453,9 +453,68 @@
     bindEvents: function () {
       var self = this;
 
-      // Filter dropdown change.
+      // Filter dropdown change (hidden select, kept for compatibility).
       $(document).on("change", ".wprh-filter-select", function () {
         self.applyFilters();
+      });
+
+      // Custom dropdown: toggle open/close.
+      $(document).on("click", ".wprh-dropdown-trigger", function (e) {
+        e.stopPropagation();
+        var $dropdown = $(this).closest(".wprh-custom-dropdown");
+        var isOpen = $dropdown.hasClass("is-open");
+
+        // Close all other dropdowns.
+        $(".wprh-custom-dropdown.is-open").not($dropdown).removeClass("is-open")
+          .find(".wprh-dropdown-trigger").attr("aria-expanded", "false");
+
+        $dropdown.toggleClass("is-open", !isOpen);
+        $(this).attr("aria-expanded", !isOpen);
+      });
+
+      // Custom dropdown: select an option.
+      $(document).on("click", ".wprh-dropdown-option", function () {
+        var $option = $(this);
+        var $dropdown = $option.closest(".wprh-custom-dropdown");
+        var value = $option.data("value");
+        var label = $option.find(".wprh-dropdown-option-label").text();
+
+        // Update selected state.
+        $dropdown.find(".wprh-dropdown-option").removeClass("is-selected");
+        $option.addClass("is-selected");
+
+        // Update trigger label.
+        $dropdown.find(".wprh-dropdown-label").text(label);
+
+        // Sync hidden select and trigger change.
+        $dropdown.find(".wprh-filter-select").val(value).trigger("change");
+
+        // Close dropdown.
+        $dropdown.removeClass("is-open");
+        $dropdown.find(".wprh-dropdown-trigger").attr("aria-expanded", "false");
+      });
+
+      // Close dropdowns on outside click.
+      $(document).on("click", function () {
+        $(".wprh-custom-dropdown.is-open").removeClass("is-open")
+          .find(".wprh-dropdown-trigger").attr("aria-expanded", "false");
+      });
+
+      // Prevent dropdown menu clicks from bubbling to document.
+      $(document).on("click", ".wprh-dropdown-menu", function (e) {
+        e.stopPropagation();
+      });
+
+      // Keyboard support for custom dropdown.
+      $(document).on("keydown", ".wprh-dropdown-trigger", function (e) {
+        var $dropdown = $(this).closest(".wprh-custom-dropdown");
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          $(this).trigger("click");
+        } else if (e.key === "Escape" && $dropdown.hasClass("is-open")) {
+          $dropdown.removeClass("is-open");
+          $(this).attr("aria-expanded", "false");
+        }
       });
 
       // Search input with debounce.
@@ -755,9 +814,41 @@
   };
 
   /**
+   * Video Player - Click to play inline.
+   */
+  var VideoPlayer = {
+    init: function () {
+      $(document).on("click", ".wprh-video-player-play", function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        var $player = $(this).closest(".wprh-video-player");
+        var embedUrl = $player.data("embed-url");
+
+        if (!embedUrl) {
+          return;
+        }
+
+        var separator = embedUrl.indexOf("?") !== -1 ? "&" : "?";
+        var src = embedUrl + separator + "autoplay=1";
+
+        var $iframe = $(
+          '<iframe src="' + src + '" frameborder="0" allowfullscreen ' +
+          'allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" ' +
+          'title="' + ($player.find("img").attr("alt") || "") + '"></iframe>'
+        );
+
+        $player.find(".wprh-video-player-thumbnail").replaceWith($iframe);
+        $player.addClass("is-playing");
+      });
+    },
+  };
+
+  /**
    * Initialize all modules on document ready.
    */
   $(document).ready(function () {
+    VideoPlayer.init();
     TableOfContents.init();
     VideoHandler.init();
     ExternalLinkHandler.init();

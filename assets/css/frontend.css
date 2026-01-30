@@ -21,7 +21,7 @@
 
 .wprh-single-resource {
   background: #fff;
-  padding: 30px;
+  padding: 0px;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
@@ -94,6 +94,79 @@
   left: 0;
   width: 100%;
   height: 100%;
+}
+
+/* Video Player Shortcode */
+.wprh-video-player {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #000;
+  margin-bottom: 20px;
+}
+
+.wprh-video-player-thumbnail {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.wprh-video-player-thumbnail img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.wprh-video-player-placeholder {
+  width: 100%;
+  height: 100%;
+  background: #1a1a2e;
+}
+
+.wprh-video-player .wprh-video-player-play {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  z-index: 2;
+  transition: transform 0.2s;
+}
+
+.wprh-video-player .wprh-video-player-play:hover {
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+.wprh-video-player-duration {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  font-size: 13px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  z-index: 2;
+}
+
+.wprh-video-player.is-playing {
+  aspect-ratio: 16 / 9;
+}
+
+.wprh-video-player.is-playing iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
 }
 
 .wprh-video-meta {
@@ -398,9 +471,9 @@
 
 /* Resource Card */
 .wprh-resource-card {
-  background: #fff;
+  background: rgb(0 0 0 / 3%);
   border-radius: 16px;
-  box-shadow: 0 1px 3px #d0d0d0;
+  box-shadow: 0 1px 3px #959595;
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -556,6 +629,7 @@
 
 .wprh-search-input {
   width: 100%;
+  height: 100%;
   padding: 10px 40px 10px 15px;
   border: 1px solid #ddd;
   border-radius: 6px;
@@ -592,30 +666,187 @@
   align-items: center;
 }
 
-.wprh-filter-select {
-  padding: 10px 35px 10px 15px;
+/* Custom Dropdown */
+.wprh-custom-dropdown {
+  position: relative;
+}
+
+.wprh-dropdown-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 15px;
   border: 1px solid #ddd;
   border-radius: 6px;
   font-size: 14px;
-  background: #fff
-    url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><path fill="%23666" d="M6 8L1 3h10z"/></svg>')
-    no-repeat right 12px center;
-  background-size: 10px;
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
+  background: #fff;
   cursor: pointer;
   min-width: 150px;
-  transition: border-color 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+  color: #1d2327;
+  line-height: 1.4;
+  text-align: left;
+  width: 100%;
 }
 
-.wprh-filter-select:hover {
+.wprh-dropdown-trigger:hover {
   border-color: #999;
 }
 
-.wprh-filter-select:focus {
-  outline: none;
+.wprh-custom-dropdown.is-open .wprh-dropdown-trigger {
   border-color: #2271b1;
+  box-shadow: 0 0 0 1px #2271b1;
+}
+
+.wprh-dropdown-label {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wprh-dropdown-chevron {
+  flex-shrink: 0;
+  color: #666;
+  transition: transform 0.2s;
+}
+
+.wprh-custom-dropdown.is-open .wprh-dropdown-chevron {
+  transform: rotate(180deg);
+}
+
+.wprh-dropdown-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 100%;
+  max-height: 280px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+  padding: 4px;
+}
+
+.wprh-custom-dropdown.is-open .wprh-dropdown-menu {
+  display: block;
+}
+
+.wprh-dropdown-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #1d2327;
+  transition: background 0.15s;
+  line-height: 1.4;
+}
+
+.wprh-dropdown-option:hover {
+  background: #f0f6fc;
+}
+
+.wprh-dropdown-option.is-selected {
+  background: #f0f6fc;
+  color: #2271b1;
+  font-weight: 500;
+}
+
+.wprh-dropdown-option-label {
+  flex: 1;
+}
+
+.wprh-dropdown-count {
+  font-size: 12px;
+  color: #999;
+  background: #f0f0f1;
+  padding: 1px 7px;
+  border-radius: 10px;
+  line-height: 1.5;
+  flex-shrink: 0;
+}
+
+.wprh-dropdown-option.is-selected .wprh-dropdown-count {
+  background: #e0ecf5;
+  color: #2271b1;
+}
+
+.wprh-dropdown-check {
+  flex-shrink: 0;
+  color: #2271b1;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.wprh-dropdown-option.is-selected .wprh-dropdown-check {
+  opacity: 1;
+}
+
+/* Hierarchical dropdown depth styles */
+.wprh-dropdown-option.wprh-dropdown-depth-1,
+.wprh-dropdown-option.wprh-dropdown-depth-2,
+.wprh-dropdown-option.wprh-dropdown-depth-3 {
+  font-size: 13px;
+  color: #50575e;
+}
+
+.wprh-dropdown-option.wprh-dropdown-depth-1::before,
+.wprh-dropdown-option.wprh-dropdown-depth-2::before,
+.wprh-dropdown-option.wprh-dropdown-depth-3::before {
+  content: "–";
+  color: #c3c4c7;
+  flex-shrink: 0;
+}
+
+.wprh-dropdown-option.wprh-dropdown-depth-2::before {
+  content: "––";
+}
+
+.wprh-dropdown-option.wprh-dropdown-depth-3::before {
+  content: "–––";
+}
+
+/* Featured filter highlight */
+.wprh-filter-featured {
+  border-left: 3px solid #2271b1;
+  background: #f0f6fc;
+  border-radius: 6px;
+}
+
+.wprh-filter-featured.wprh-custom-dropdown .wprh-dropdown-trigger {
+  background: #f0f6fc;
+  border-color: #2271b1;
+}
+
+.wprh-filter-featured.wprh-resources-search .wprh-search-input {
+  background: #f0f6fc;
+  border-color: #2271b1;
+}
+
+/* Scrollbar styling for dropdown menu */
+.wprh-dropdown-menu::-webkit-scrollbar {
+  width: 6px;
+}
+
+.wprh-dropdown-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.wprh-dropdown-menu::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 3px;
+}
+
+.wprh-dropdown-menu::-webkit-scrollbar-thumb:hover {
+  background: #999;
 }
 
 /* Layout Toggle */
@@ -659,10 +890,10 @@
   color: #fff;
 }
 
-.wprh-layout-btn .dashicons {
-  font-size: 18px;
-  width: 18px;
-  height: 18px;
+.wprh-layout-btn svg {
+  width: 20px;
+  height: 20px;
+  display: block;
 }
 
 /* ==========================================================================
@@ -791,7 +1022,7 @@
 
 .wprh-resource-card .wprh-card-media {
   position: relative;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 16 / 9;
   overflow: hidden;
   background: #f0f0f1;
 }
@@ -939,6 +1170,13 @@
   gap: 8px;
   align-items: center;
   margin-top: auto;
+}
+
+/* Hide card footer when disabled via settings */
+.wprh-hide-card-footer .wprh-card-footer,
+.wprh-hide-card-footer .wprh-resources-grid.wprh-layout-list .wprh-card-footer,
+.wprh-hide-card-footer.wprh-resources-container .wprh-card-footer {
+  display: none;
 }
 
 /* Taxonomy Pills */
@@ -1861,7 +2099,7 @@
     width: 100%;
   }
 
-  .wprh-filter-select {
+  .wprh-custom-dropdown {
     flex: 1;
     min-width: 0;
   }
@@ -1941,7 +2179,7 @@
     flex-direction: column;
   }
 
-  .wprh-filter-select {
+  .wprh-custom-dropdown {
     width: 100%;
   }
 
@@ -2007,6 +2245,13 @@
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
   max-width: 80%;
   word-wrap: break-word;
+}
+
+.wprh-resources-grid.wprh-layout-list .wprh-overlay-title {
+  font-size: 18px;
+}
+.wprh-resources-grid.wprh-layout-l .wprh-play-button svg {
+  width: 30px;
 }
 
 /* Responsive overlay text */

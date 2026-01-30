@@ -37,6 +37,7 @@ use WPResourceHub\Shortcodes\ResourcesShortcode;
 use WPResourceHub\Shortcodes\ResourceShortcode;
 use WPResourceHub\Shortcodes\CollectionShortcode;
 use WPResourceHub\Shortcodes\AccordionShortcode;
+use WPResourceHub\Shortcodes\VideoShortcode;
 use WPResourceHub\Blocks\BlocksManager;
 
 // Prevent direct access.
@@ -292,6 +293,7 @@ final class Plugin {
         ResourcesShortcode::get_instance();
         ResourceShortcode::get_instance();
         CollectionShortcode::get_instance();
+        VideoShortcode::get_instance();
         if ( self::is_accordions_enabled() ) {
             AccordionShortcode::get_instance();
         }

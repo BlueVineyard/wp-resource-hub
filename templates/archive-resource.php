@@ -32,7 +32,7 @@ get_header();
 do_action('wprh_before_main_content');
 ?>
 
-<div id="primary" class="content-area wprh-content-area wprh-archive">
+<div id="primary" class="content-area wprh-content-area wprh-archive<?php echo ! SettingsPage::get_setting('frontend', 'show_card_footer', true) ? ' wprh-hide-card-footer' : ''; ?>">
     <main id="main" class="site-main wprh-site-main">
 
         <?php if (have_posts()) : ?>

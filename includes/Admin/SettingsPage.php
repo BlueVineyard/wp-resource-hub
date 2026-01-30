@@ -183,6 +183,14 @@ class SettingsPage
         );
 
         add_settings_field(
+            'card_elements',
+            __('Card Elements', 'wp-resource-hub'),
+            array($this, 'render_card_elements_field'),
+            'wprh-settings-frontend',
+            'wprh_frontend_section'
+        );
+
+        add_settings_field(
             'internal_content_defaults',
             __('Internal Content Defaults', 'wp-resource-hub'),
             array($this, 'render_internal_content_defaults_field'),
@@ -235,6 +243,8 @@ class SettingsPage
             'enable_sort_filter'      => true,
             'enable_layout_toggle'    => true,
             'filter_order'            => array('search', 'type', 'topic', 'audience', 'duration', 'sort', 'layout_toggle'),
+            'featured_filters'        => array(),
+            'show_card_footer'        => true,
             'default_show_toc'        => false,
             'default_show_reading_time' => true,
             'default_show_related'    => true,
@@ -322,6 +332,14 @@ class SettingsPage
             $sanitized['filter_order'] = $defaults['filter_order'];
         }
 
+        // Featured filters.
+        if (! empty($input['featured_filters']) && is_array($input['featured_filters'])) {
+            $sanitized['featured_filters'] = array_values(array_intersect($input['featured_filters'], $valid_filter_keys));
+        } else {
+            $sanitized['featured_filters'] = array();
+        }
+
+        $sanitized['show_card_footer']        = ! empty($input['show_card_footer']);
         $sanitized['default_show_toc']        = ! empty($input['default_show_toc']);
         $sanitized['default_show_reading_time'] = ! empty($input['default_show_reading_time']);
         $sanitized['default_show_related']    = ! empty($input['default_show_related']);
@@ -634,6 +652,10 @@ class SettingsPage
             }
         }
 
+        $featured_filters = isset($settings['featured_filters']) && is_array($settings['featured_filters'])
+            ? $settings['featured_filters']
+            : array();
+
         wp_enqueue_script('jquery-ui-sortable');
     ?>
         <style>
@@ -693,6 +715,27 @@ class SettingsPage
             .wprh-filter-order-item input[type="checkbox"] {
                 margin: 0;
             }
+            .wprh-featured-toggle {
+                background: none;
+                border: none;
+                padding: 0;
+                cursor: pointer;
+                color: #c3c4c7;
+                font-size: 16px;
+                width: 20px;
+                height: 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+                transition: color 0.2s;
+            }
+            .wprh-featured-toggle:hover {
+                color: #dba617;
+            }
+            .wprh-featured-toggle.is-featured {
+                color: #dba617;
+            }
         </style>
 
         <ul class="wprh-filter-order-list" id="wprh-filter-order-list">
@@ -702,6 +745,7 @@ class SettingsPage
                 $setting_key = $item['setting'];
                 $is_enabled = isset($settings[$setting_key]) ? ! empty($settings[$setting_key]) : true;
                 $field_name = 'wprh_frontend_settings[' . $setting_key . ']';
+                $is_featured = in_array($key, $featured_filters, true);
             ?>
                 <li class="wprh-filter-order-item" data-key="<?php echo esc_attr($key); ?>">
                     <span class="dashicons dashicons-menu wprh-drag-handle"></span>
@@ -709,6 +753,10 @@ class SettingsPage
                     <input type="checkbox" name="<?php echo esc_attr($field_name); ?>" value="1"
                         <?php checked($is_enabled); ?>>
                     <label><?php echo esc_html($item['label']); ?></label>
+                    <button type="button" class="wprh-featured-toggle <?php echo $is_featured ? 'is-featured' : ''; ?>" title="<?php esc_attr_e('Toggle featured', 'wp-resource-hub'); ?>">
+                        <span class="dashicons dashicons-star-<?php echo $is_featured ? 'filled' : 'empty'; ?>"></span>
+                    </button>
+                    <input type="hidden" class="wprh-featured-input" name="wprh_frontend_settings[featured_filters][]" value="<?php echo esc_attr($key); ?>" <?php echo $is_featured ? '' : 'disabled'; ?>>
                     <input type="hidden" name="wprh_frontend_settings[filter_order][]" value="<?php echo esc_attr($key); ?>">
                 </li>
             <?php endforeach; ?>
@@ -724,8 +772,47 @@ class SettingsPage
                     cursor: 'move',
                     opacity: 0.9
                 });
+
+                $('#wprh-filter-order-list').on('click', '.wprh-featured-toggle', function() {
+                    var $btn = $(this);
+                    var $icon = $btn.find('.dashicons');
+                    var $input = $btn.siblings('.wprh-featured-input');
+                    var isFeatured = $btn.hasClass('is-featured');
+
+                    if (isFeatured) {
+                        $btn.removeClass('is-featured');
+                        $icon.removeClass('dashicons-star-filled').addClass('dashicons-star-empty');
+                        $input.prop('disabled', true);
+                    } else {
+                        $btn.addClass('is-featured');
+                        $icon.removeClass('dashicons-star-empty').addClass('dashicons-star-filled');
+                        $input.prop('disabled', false);
+                    }
+                });
             });
         </script>
+    <?php
+    }
+
+    /**
+     * Render card elements field.
+     *
+     * @since 1.4.0
+     *
+     * @return void
+     */
+    public function render_card_elements_field()
+    {
+        $settings = get_option('wprh_frontend_settings', $this->get_frontend_defaults());
+    ?>
+        <fieldset>
+            <label>
+                <input type="checkbox" name="wprh_frontend_settings[show_card_footer]" value="1"
+                    <?php checked(! empty($settings['show_card_footer'])); ?>>
+                <?php esc_html_e('Show card footer (taxonomy pills)', 'wp-resource-hub'); ?>
+            </label>
+        </fieldset>
+        <p class="description"><?php esc_html_e('Control which elements are visible on resource cards in grid and list views.', 'wp-resource-hub'); ?></p>
     <?php
     }
 

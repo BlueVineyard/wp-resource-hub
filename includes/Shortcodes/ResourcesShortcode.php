@@ -120,6 +120,21 @@ class ResourcesShortcode
     {
         $atts = shortcode_atts($this->get_defaults(), $atts, self::TAG);
 
+        // Auto-detect taxonomy context on archive pages.
+        if (is_tax()) {
+            $queried = get_queried_object();
+            if ($queried instanceof \WP_Term) {
+                $tax_map = array(
+                    ResourceTypeTax::get_taxonomy()     => 'type',
+                    ResourceTopicTax::get_taxonomy()    => 'topic',
+                    ResourceAudienceTax::get_taxonomy() => 'audience',
+                );
+                if (isset($tax_map[$queried->taxonomy]) && empty($atts[$tax_map[$queried->taxonomy]])) {
+                    $atts[$tax_map[$queried->taxonomy]] = $queried->slug;
+                }
+            }
+        }
+
         // Normalize boolean attributes.
         $atts['show_filters']         = filter_var($atts['show_filters'], FILTER_VALIDATE_BOOLEAN);
         $atts['show_type_filter']     = filter_var($atts['show_type_filter'], FILTER_VALIDATE_BOOLEAN);
@@ -146,27 +161,37 @@ class ResourcesShortcode
 
         ob_start();
 ?>
-        <div id="<?php echo esc_attr($instance_id); ?>" class="wprh-resources-container <?php echo esc_attr($atts['class']); ?>"
-            data-atts="<?php echo esc_attr(wp_json_encode($atts)); ?>">
+<?php
+        $container_classes = 'wprh-resources-container ' . $atts['class'];
+        if (! SettingsPage::get_setting('frontend', 'show_card_footer', true)) {
+            $container_classes .= ' wprh-hide-card-footer';
+        }
+        ?>
+<div id="<?php echo esc_attr($instance_id); ?>" class="<?php echo esc_attr(trim($container_classes)); ?>"
+    data-atts="<?php echo esc_attr(wp_json_encode($atts)); ?>">
 
-            <?php if ($atts['show_filters'] || $atts['show_search']) : ?>
-                <?php
+    <?php if ($atts['show_filters'] || $atts['show_search']) : ?>
+    <?php
                 $filter_order = SettingsPage::get_setting('frontend', 'filter_order', array('search', 'type', 'topic', 'audience', 'duration', 'sort', 'layout_toggle'));
                 if (! is_array($filter_order)) {
                     $filter_order = array('search', 'type', 'topic', 'audience', 'duration', 'sort', 'layout_toggle');
                 }
+                $featured_filters = SettingsPage::get_setting('frontend', 'featured_filters', array());
+                if (! is_array($featured_filters)) {
+                    $featured_filters = array();
+                }
                 ?>
-                <div class="wprh-resources-toolbar">
-                    <?php foreach ($filter_order as $filter_key) :
-                        switch ($filter_key) :
+    <div class="wprh-resources-toolbar">
+        <?php foreach ($filter_order as $filter_key) :
+                        switch ($filter_key):
                             case 'search':
                                 if ($atts['show_search']) : ?>
-                                    <div class="wprh-resources-search">
-                                        <input type="text" class="wprh-search-input"
-                                            placeholder="<?php esc_attr_e('Search resources...', 'wp-resource-hub'); ?>" value="">
-                                        <span class="wprh-search-icon dashicons dashicons-search"></span>
-                                    </div>
-                                <?php endif;
+        <div class="wprh-resources-search<?php echo in_array('search', $featured_filters, true) ? ' wprh-filter-featured' : ''; ?>">
+            <input type="text" class="wprh-search-input"
+                placeholder="<?php esc_attr_e('Search resources...', 'wp-resource-hub'); ?>" value="">
+            <span class="wprh-search-icon dashicons dashicons-search"></span>
+        </div>
+        <?php endif;
                                 break;
 
                             case 'type':
@@ -201,54 +226,64 @@ class ResourcesShortcode
 
                             case 'layout_toggle':
                                 if ($atts['show_filters'] && $atts['show_layout_toggle']) : ?>
-                                    <div class="wprh-layout-toggle">
-                                        <button type="button" class="wprh-layout-btn <?php echo 'grid' === $atts['layout'] ? 'is-active' : ''; ?>" data-layout="grid" aria-label="<?php esc_attr_e('Grid view', 'wp-resource-hub'); ?>">
-                                            <span class="dashicons dashicons-grid-view"></span>
-                                        </button>
-                                        <button type="button" class="wprh-layout-btn <?php echo 'list' === $atts['layout'] ? 'is-active' : ''; ?>" data-layout="list" aria-label="<?php esc_attr_e('List view', 'wp-resource-hub'); ?>">
-                                            <span class="dashicons dashicons-list-view"></span>
-                                        </button>
-                                    </div>
-                                <?php endif;
+        <div class="wprh-layout-toggle<?php echo in_array('layout_toggle', $featured_filters, true) ? ' wprh-filter-featured' : ''; ?>">
+            <button type="button" class="wprh-layout-btn <?php echo 'grid' === $atts['layout'] ? 'is-active' : ''; ?>"
+                data-layout="grid" aria-label="<?php esc_attr_e('Grid view', 'wp-resource-hub'); ?>">
+                <svg xmlns="http://www.w3.org/2000/svg" height="30px" viewBox="0 -960 960 960" width="30px"
+                    fill="currentColor">
+                    <path
+                        d="M120-510v-330h330v330H120Zm0 390v-330h330v330H120Zm390-390v-330h330v330H510Zm0 390v-330h330v330H510ZM180-570h210v-210H180v210Zm390 0h210v-210H570v210Zm0 390h210v-210H570v210Zm-390 0h210v-210H180v210Zm390-390Zm0 180Zm-180 0Zm0-180Z" />
+                </svg>
+            </button>
+            <button type="button" class="wprh-layout-btn <?php echo 'list' === $atts['layout'] ? 'is-active' : ''; ?>"
+                data-layout="list" aria-label="<?php esc_attr_e('List view', 'wp-resource-hub'); ?>">
+                <svg xmlns="http://www.w3.org/2000/svg" height="30px" viewBox="0 -960 960 960" width="30px"
+                    fill="currentColor">
+                    <path
+                        d="M350-220h470v-137H350v137ZM140-603h150v-137H140v137Zm0 187h150v-127H140v127Zm0 196h150v-137H140v137Zm210-196h470v-127H350v127Zm0-187h470v-137H350v137ZM140-160q-24 0-42-18t-18-42v-520q0-24 18-42t42-18h680q24 0 42 18t18 42v520q0 24-18 42t-42 18H140Z" />
+                </svg>
+            </button>
+        </div>
+        <?php endif;
                                 break;
                         endswitch;
                     endforeach; ?>
-                </div>
-            <?php endif; ?>
+    </div>
+    <?php endif; ?>
 
-            <div class="wprh-resources-grid-wrapper">
-                <div class="wprh-resources-loading" style="display: none;">
-                    <span class="wprh-spinner"></span>
-                    <?php esc_html_e('Loading...', 'wp-resource-hub'); ?>
-                </div>
-
-                <?php echo $this->render_resources($query, $atts); ?>
-            </div>
-
-            <?php if ($atts['show_pagination'] && $query->max_num_pages > 1) : ?>
-                <div class="wprh-resources-pagination">
-                    <?php echo $this->render_pagination($query, 1); ?>
-                </div>
-            <?php endif; ?>
+    <div class="wprh-resources-grid-wrapper">
+        <div class="wprh-resources-loading" style="display: none;">
+            <span class="wprh-spinner"></span>
+            <?php esc_html_e('Loading...', 'wp-resource-hub'); ?>
         </div>
 
-        <!-- Video Lightbox Modal -->
-        <div id="wprh-video-lightbox" class="wprh-lightbox" style="display:none;">
-            <div class="wprh-lightbox-overlay"></div>
-            <div class="wprh-lightbox-content">
-                <button class="wprh-lightbox-close" aria-label="<?php esc_attr_e('Close video', 'wp-resource-hub'); ?>">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M18 6L6 18M6 6L18 18" stroke="white" stroke-width="2" stroke-linecap="round" />
-                    </svg>
-                </button>
-                <div class="wprh-lightbox-video-wrapper">
-                    <iframe id="wprh-lightbox-iframe" src="" frameborder="0" allowfullscreen
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
-                    </iframe>
-                </div>
-            </div>
+        <?php echo $this->render_resources($query, $atts); ?>
+    </div>
+
+    <?php if ($atts['show_pagination'] && $query->max_num_pages > 1) : ?>
+    <div class="wprh-resources-pagination">
+        <?php echo $this->render_pagination($query, 1); ?>
+    </div>
+    <?php endif; ?>
+</div>
+
+<!-- Video Lightbox Modal -->
+<div id="wprh-video-lightbox" class="wprh-lightbox" style="display:none;">
+    <div class="wprh-lightbox-overlay"></div>
+    <div class="wprh-lightbox-content">
+        <button class="wprh-lightbox-close" aria-label="<?php esc_attr_e('Close video', 'wp-resource-hub'); ?>">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M18 6L6 18M6 6L18 18" stroke="white" stroke-width="2" stroke-linecap="round" />
+            </svg>
+        </button>
+        <div class="wprh-lightbox-video-wrapper">
+            <iframe id="wprh-lightbox-iframe" src="" frameborder="0" allowfullscreen
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture">
+            </iframe>
         </div>
-    <?php
+    </div>
+</div>
+<?php
         return ob_get_clean();
     }
 
@@ -390,14 +425,14 @@ class ResourcesShortcode
 
         ob_start();
     ?>
-        <div class="wprh-resources-grid <?php echo esc_attr($layout_class . ' ' . $columns_class); ?>">
-            <?php while ($query->have_posts()) : ?>
-                <?php $query->the_post(); ?>
-                <?php echo $this->render_resource_card(get_post(), $atts); ?>
-            <?php endwhile; ?>
-            <?php wp_reset_postdata(); ?>
-        </div>
-    <?php
+<div class="wprh-resources-grid <?php echo esc_attr($layout_class . ' ' . $columns_class); ?>">
+    <?php while ($query->have_posts()) : ?>
+    <?php $query->the_post(); ?>
+    <?php echo $this->render_resource_card(get_post(), $atts); ?>
+    <?php endwhile; ?>
+    <?php wp_reset_postdata(); ?>
+</div>
+<?php
         return ob_get_clean();
     }
 
@@ -421,11 +456,11 @@ class ResourcesShortcode
 
         ob_start();
     ?>
-        <article
-            class="wprh-resource-card wprh-type-<?php echo esc_attr($type_slug); ?> <?php echo ($type_slug === 'video' && $lightbox_mode) ? 'wprh-lightbox-enabled' : ''; ?>"
-            data-id="<?php echo esc_attr($post->ID); ?>">
-            <div class="wprh-card-media">
-                <?php
+<article
+    class="wprh-resource-card wprh-type-<?php echo esc_attr($type_slug); ?> <?php echo ($type_slug === 'video' && $lightbox_mode) ? 'wprh-lightbox-enabled' : ''; ?>"
+    data-id="<?php echo esc_attr($post->ID); ?>">
+    <div class="wprh-card-media">
+        <?php
                 $thumbnail = Helpers::get_resource_thumbnail($post, 'medium_large');
 
                 // For video types, add play button and video data attributes.
@@ -434,98 +469,98 @@ class ResourcesShortcode
                     $video_id = get_post_meta($post->ID, '_wprh_video_id', true);
                     $embed_url = $video_id && $video_provider ? Helpers::get_video_embed_url($video_id, $video_provider) : '';
                 ?>
-                    <div class="wprh-card-image wprh-video-card" data-video-url="<?php echo esc_attr($embed_url); ?>"
-                        data-video-title="<?php echo esc_attr(get_the_title($post)); ?>">
-                        <?php if (! empty($thumbnail)) : ?>
-                            <?php echo $thumbnail; ?>
-                        <?php else : ?>
-                            <div class="wprh-card-placeholder">
-                                <span class="dashicons <?php echo esc_attr($type_icon); ?>"></span>
-                            </div>
-                        <?php endif; ?>
-                        <button class="wprh-play-button" aria-label="<?php esc_attr_e('Play video', 'wp-resource-hub'); ?>">
-                            <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <circle cx="32" cy="32" r="32" fill="rgba(0,0,0,0.7)" />
-                                <path d="M26 20L44 32L26 44V20Z" fill="white" />
-                            </svg>
-                        </button>
-                    </div>
-                <?php else : ?>
-                    <?php if (! empty($thumbnail)) : ?>
-                        <a href="<?php echo esc_url(get_permalink($post)); ?>" class="wprh-card-image">
-                            <?php echo $thumbnail; ?>
-                        </a>
-                    <?php else : ?>
-                        <a href="<?php echo esc_url(get_permalink($post)); ?>" class="wprh-card-image wprh-card-placeholder">
-                            <span class="dashicons <?php echo esc_attr($type_icon); ?>"></span>
-                        </a>
-                    <?php endif; ?>
-                <?php endif; ?>
+        <div class="wprh-card-image wprh-video-card" data-video-url="<?php echo esc_attr($embed_url); ?>"
+            data-video-title="<?php echo esc_attr(get_the_title($post)); ?>">
+            <?php if (! empty($thumbnail)) : ?>
+            <?php echo $thumbnail; ?>
+            <?php else : ?>
+            <div class="wprh-card-placeholder">
+                <span class="dashicons <?php echo esc_attr($type_icon); ?>"></span>
+            </div>
+            <?php endif; ?>
+            <button class="wprh-play-button" aria-label="<?php esc_attr_e('Play video', 'wp-resource-hub'); ?>">
+                <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="32" cy="32" r="32" fill="rgba(0,0,0,0.7)" />
+                    <path d="M26 20L44 32L26 44V20Z" fill="white" />
+                </svg>
+            </button>
+        </div>
+        <?php else : ?>
+        <?php if (! empty($thumbnail)) : ?>
+        <a href="<?php echo esc_url(get_permalink($post)); ?>" class="wprh-card-image">
+            <?php echo $thumbnail; ?>
+        </a>
+        <?php else : ?>
+        <a href="<?php echo esc_url(get_permalink($post)); ?>" class="wprh-card-image wprh-card-placeholder">
+            <span class="dashicons <?php echo esc_attr($type_icon); ?>"></span>
+        </a>
+        <?php endif; ?>
+        <?php endif; ?>
 
-                <?php
+        <?php
                 // Display video duration for video resources.
                 if ($type_slug === 'video') {
                     $duration = get_post_meta($post->ID, '_wprh_video_duration', true);
                     if ($duration) : ?>
-                        <span class="wprh-video-duration-badge">
-                            <?php echo esc_html($duration); ?>
-                        </span>
-                <?php endif;
+        <span class="wprh-video-duration-badge">
+            <?php echo esc_html($duration); ?>
+        </span>
+        <?php endif;
                 }
                 ?>
 
-                <?php if ($resource_type) : ?>
-                    <span class="wprh-card-type wprh-type-badge-<?php echo esc_attr($type_slug); ?>">
-                        <span class="dashicons <?php echo esc_attr($type_icon); ?>"></span>
-                        <?php echo esc_html($resource_type->name); ?>
-                    </span>
-                <?php endif; ?>
-            </div>
+        <?php if ($resource_type) : ?>
+        <span class="wprh-card-type wprh-type-badge-<?php echo esc_attr($type_slug); ?>">
+            <span class="dashicons <?php echo esc_attr($type_icon); ?>"></span>
+            <?php echo esc_html($resource_type->name); ?>
+        </span>
+        <?php endif; ?>
+    </div>
 
-            <div class="wprh-card-body">
-                <h3 class="wprh-card-title">
-                    <?php if ($type_slug === 'video' && $lightbox_mode) : ?>
-                        <span class="wprh-video-card-title"><?php echo esc_html(get_the_title($post)); ?></span>
-                    <?php else : ?>
-                        <a href="<?php echo esc_url(get_permalink($post)); ?>">
-                            <?php echo esc_html(get_the_title($post)); ?>
-                        </a>
-                    <?php endif; ?>
-                </h3>
+    <div class="wprh-card-body">
+        <h3 class="wprh-card-title">
+            <?php if ($type_slug === 'video' && $lightbox_mode) : ?>
+            <span class="wprh-video-card-title"><?php echo esc_html(get_the_title($post)); ?></span>
+            <?php else : ?>
+            <a href="<?php echo esc_url(get_permalink($post)); ?>">
+                <?php echo esc_html(get_the_title($post)); ?>
+            </a>
+            <?php endif; ?>
+        </h3>
 
-                <?php if (has_excerpt($post) || ! empty($post->post_content)) : ?>
-                    <div class="wprh-card-excerpt">
-                        <?php echo wp_trim_words(get_the_excerpt($post), 20, '...'); ?>
-                    </div>
-                <?php endif; ?>
+        <?php if (has_excerpt($post) || ! empty($post->post_content)) : ?>
+        <div class="wprh-card-excerpt">
+            <?php echo wp_trim_words(get_the_excerpt($post), 20, '...'); ?>
+        </div>
+        <?php endif; ?>
 
-            </div>
+    </div>
 
-            <div class="wprh-card-footer">
-                <?php
+    <div class="wprh-card-footer">
+        <?php
                 // Get topics and audiences.
                 $topics = get_the_terms($post->ID, ResourceTopicTax::get_taxonomy());
                 $audiences = get_the_terms($post->ID, ResourceAudienceTax::get_taxonomy());
                 ?>
 
-                <?php if ($topics && ! is_wp_error($topics)) : ?>
-                    <?php foreach ($topics as $topic) : ?>
-                        <a href="<?php echo esc_url(get_term_link($topic)); ?>" class="wprh-card-pill wprh-pill-topic">
-                            <?php echo esc_html($topic->name); ?>
-                        </a>
-                    <?php endforeach; ?>
-                <?php endif; ?>
+        <?php if ($topics && ! is_wp_error($topics)) : ?>
+        <?php foreach ($topics as $topic) : ?>
+        <a href="<?php echo esc_url(get_term_link($topic)); ?>" class="wprh-card-pill wprh-pill-topic">
+            <?php echo esc_html($topic->name); ?>
+        </a>
+        <?php endforeach; ?>
+        <?php endif; ?>
 
-                <?php if ($audiences && ! is_wp_error($audiences)) : ?>
-                    <?php foreach ($audiences as $audience) : ?>
-                        <a href="<?php echo esc_url(get_term_link($audience)); ?>" class="wprh-card-pill wprh-pill-audience">
-                            <?php echo esc_html($audience->name); ?>
-                        </a>
-                    <?php endforeach; ?>
-                <?php endif; ?>
-            </div>
-        </article>
-    <?php
+        <?php if ($audiences && ! is_wp_error($audiences)) : ?>
+        <?php foreach ($audiences as $audience) : ?>
+        <a href="<?php echo esc_url(get_term_link($audience)); ?>" class="wprh-card-pill wprh-pill-audience">
+            <?php echo esc_html($audience->name); ?>
+        </a>
+        <?php endforeach; ?>
+        <?php endif; ?>
+    </div>
+</article>
+<?php
         return ob_get_clean();
     }
 
@@ -553,18 +588,55 @@ class ResourcesShortcode
             return '';
         }
 
-        ob_start();
-    ?>
-        <select class="wprh-filter-select" data-filter="<?php echo esc_attr($filter_key); ?>">
-            <option value=""><?php echo esc_html($all_label); ?></option>
-            <?php foreach ($terms as $term) : ?>
-                <option value="<?php echo esc_attr($term->slug); ?>" <?php selected($selected, $term->slug); ?>>
-                    <?php echo esc_html($term->name); ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-    <?php
-        return ob_get_clean();
+        $selected_label = $all_label;
+        foreach ($terms as $term) {
+            if ($term->slug === $selected) {
+                $selected_label = $term->name;
+                break;
+            }
+        }
+
+        $options = array();
+        $options[] = array('value' => '', 'label' => $all_label, 'count' => 0, 'depth' => 0);
+
+        // Check if taxonomy is hierarchical.
+        $tax_obj = get_taxonomy($taxonomy);
+        if ($tax_obj && $tax_obj->hierarchical) {
+            $this->build_hierarchical_options($terms, $options, 0, 0);
+        } else {
+            foreach ($terms as $term) {
+                $options[] = array('value' => $term->slug, 'label' => $term->name, 'count' => $term->count, 'depth' => 0);
+            }
+        }
+
+        return $this->render_custom_dropdown($filter_key, $options, $selected, $selected_label);
+    }
+
+    /**
+     * Build hierarchical options array from terms.
+     *
+     * @since 1.4.0
+     *
+     * @param array $terms   All terms.
+     * @param array &$options Options array to populate.
+     * @param int   $parent  Parent term ID.
+     * @param int   $depth   Current depth.
+     * @return void
+     */
+    private function build_hierarchical_options($terms, &$options, $parent, $depth)
+    {
+        foreach ($terms as $term) {
+            if ((int) $term->parent !== $parent) {
+                continue;
+            }
+            $options[] = array(
+                'value' => $term->slug,
+                'label' => $term->name,
+                'count' => $term->count,
+                'depth' => $depth,
+            );
+            $this->build_hierarchical_options($terms, $options, $term->term_id, $depth + 1);
+        }
     }
 
     /**
@@ -576,17 +648,15 @@ class ResourcesShortcode
      */
     private function render_duration_filter()
     {
-        ob_start();
-    ?>
-        <select class="wprh-filter-select" data-filter="duration">
-            <option value=""><?php esc_html_e('All Durations', 'wp-resource-hub'); ?></option>
-            <option value="0-5"><?php esc_html_e('Under 5 minutes', 'wp-resource-hub'); ?></option>
-            <option value="5-15"><?php esc_html_e('5-15 minutes', 'wp-resource-hub'); ?></option>
-            <option value="15-30"><?php esc_html_e('15-30 minutes', 'wp-resource-hub'); ?></option>
-            <option value="30+"><?php esc_html_e('30+ minutes', 'wp-resource-hub'); ?></option>
-        </select>
-    <?php
-        return ob_get_clean();
+        $options = array(
+            array('value' => '',     'label' => __('All Durations', 'wp-resource-hub')),
+            array('value' => '0-5',  'label' => __('Under 5 minutes', 'wp-resource-hub')),
+            array('value' => '5-15', 'label' => __('5-15 minutes', 'wp-resource-hub')),
+            array('value' => '15-30', 'label' => __('15-30 minutes', 'wp-resource-hub')),
+            array('value' => '30+',  'label' => __('30+ minutes', 'wp-resource-hub')),
+        );
+
+        return $this->render_custom_dropdown('duration', $options, '', $options[0]['label']);
     }
 
     /**
@@ -599,23 +669,81 @@ class ResourcesShortcode
      */
     private function render_sort_filter($current = 'date')
     {
-        $options = array(
-            'date'      => __('Newest First', 'wp-resource-hub'),
-            'title-asc' => __('Title (A-Z)', 'wp-resource-hub'),
+        $raw_options = array(
+            'date'       => __('Newest First', 'wp-resource-hub'),
+            'title-asc'  => __('Title (A-Z)', 'wp-resource-hub'),
             'title-desc' => __('Title (Z-A)', 'wp-resource-hub'),
-            'modified'  => __('Recently Updated', 'wp-resource-hub'),
+            'modified'   => __('Recently Updated', 'wp-resource-hub'),
         );
 
+        $options = array();
+        $selected_label = $raw_options['date'];
+        foreach ($raw_options as $value => $label) {
+            $options[] = array('value' => $value, 'label' => $label);
+            if ($value === $current) {
+                $selected_label = $label;
+            }
+        }
+
+        return $this->render_custom_dropdown('sort', $options, $current, $selected_label);
+    }
+
+    /**
+     * Render a custom dropdown component.
+     *
+     * @since 1.4.0
+     *
+     * @param string $filter_key     Filter identifier.
+     * @param array  $options        Array of options with 'value', 'label', and optional 'count'.
+     * @param string $selected_value Currently selected value.
+     * @param string $selected_label Label for the currently selected value.
+     * @return string
+     */
+    private function render_custom_dropdown($filter_key, $options, $selected_value, $selected_label)
+    {
+        $featured_filters = SettingsPage::get_setting('frontend', 'featured_filters', array());
+        $is_featured = is_array($featured_filters) && in_array($filter_key, $featured_filters, true);
         ob_start();
     ?>
-        <select class="wprh-filter-select" data-filter="sort">
-            <?php foreach ($options as $value => $label) : ?>
-                <option value="<?php echo esc_attr($value); ?>" <?php selected($current, $value); ?>>
-                    <?php echo esc_html($label); ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-    <?php
+<div class="wprh-custom-dropdown<?php echo $is_featured ? ' wprh-filter-featured' : ''; ?>" data-filter="<?php echo esc_attr($filter_key); ?>">
+    <select class="wprh-filter-select" data-filter="<?php echo esc_attr($filter_key); ?>" hidden aria-hidden="true"
+        tabindex="-1">
+        <?php foreach ($options as $opt) : ?>
+        <option value="<?php echo esc_attr($opt['value']); ?>" <?php selected($selected_value, $opt['value']); ?>>
+            <?php echo esc_html($opt['label']); ?>
+        </option>
+        <?php endforeach; ?>
+    </select>
+    <button type="button" class="wprh-dropdown-trigger" aria-expanded="false" aria-haspopup="listbox">
+        <span class="wprh-dropdown-label"><?php echo esc_html($selected_label); ?></span>
+        <svg class="wprh-dropdown-chevron" width="12" height="12" viewBox="0 0 12 12" fill="none"
+            xmlns="http://www.w3.org/2000/svg">
+            <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                stroke-linejoin="round" />
+        </svg>
+    </button>
+    <div class="wprh-dropdown-menu" role="listbox">
+        <?php foreach ($options as $opt) :
+                    $depth = isset($opt['depth']) ? (int) $opt['depth'] : 0;
+                    $depth_class = $depth > 0 ? ' wprh-dropdown-depth-' . $depth : '';
+                    $indent_style = $depth > 0 ? ' style="padding-left: ' . (12 + $depth * 20) . 'px;"' : '';
+                ?>
+        <div class="wprh-dropdown-option<?php echo esc_attr($depth_class); ?> <?php echo $selected_value === $opt['value'] ? 'is-selected' : ''; ?>"
+            data-value="<?php echo esc_attr($opt['value']); ?>" role="option" <?php echo $indent_style; ?>>
+            <span class="wprh-dropdown-option-label"><?php echo esc_html($opt['label']); ?></span>
+            <?php if (! empty($opt['count'])) : ?>
+            <span class="wprh-dropdown-count"><?php echo esc_html($opt['count']); ?></span>
+            <?php endif; ?>
+            <svg class="wprh-dropdown-check" width="14" height="14" viewBox="0 0 14 14" fill="none"
+                xmlns="http://www.w3.org/2000/svg">
+                <path d="M11.5 3.5L5.5 10L2.5 7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"
+                    stroke-linejoin="round" />
+            </svg>
+        </div>
+        <?php endforeach; ?>
+    </div>
+</div>
+<?php
         return ob_get_clean();
     }
 
@@ -638,25 +766,25 @@ class ResourcesShortcode
 
         ob_start();
     ?>
-        <div class="wprh-pagination" data-current="<?php echo esc_attr($current); ?>"
-            data-total="<?php echo esc_attr($total); ?>">
-            <button type="button" class="wprh-page-btn wprh-prev" <?php disabled($current, 1); ?>>
-                <span class="dashicons dashicons-arrow-left-alt2"></span>
-                <?php esc_html_e('Previous', 'wp-resource-hub'); ?>
-            </button>
+<div class="wprh-pagination" data-current="<?php echo esc_attr($current); ?>"
+    data-total="<?php echo esc_attr($total); ?>">
+    <button type="button" class="wprh-page-btn wprh-prev" <?php disabled($current, 1); ?>>
+        <span class="dashicons dashicons-arrow-left-alt2"></span>
+        <?php esc_html_e('Previous', 'wp-resource-hub'); ?>
+    </button>
 
-            <span class="wprh-page-info">
-                <?php
+    <span class="wprh-page-info">
+        <?php
                 /* translators: 1: Current page, 2: Total pages */
                 printf(esc_html__('Page %1$d of %2$d', 'wp-resource-hub'), $current, $total);
                 ?>
-            </span>
+    </span>
 
-            <button type="button" class="wprh-page-btn wprh-next" <?php disabled($current, $total); ?>>
-                <?php esc_html_e('Next', 'wp-resource-hub'); ?>
-                <span class="dashicons dashicons-arrow-right-alt2"></span>
-            </button>
-        </div>
+    <button type="button" class="wprh-page-btn wprh-next" <?php disabled($current, $total); ?>>
+        <?php esc_html_e('Next', 'wp-resource-hub'); ?>
+        <span class="dashicons dashicons-arrow-right-alt2"></span>
+    </button>
+</div>
 <?php
         return ob_get_clean();
     }
